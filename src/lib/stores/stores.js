@@ -12,7 +12,7 @@ export const providers = readable([], (set) => {
   const token = JSON.parse(localStorage.getItem("token"));
   fetch(urls.backendRoute + urls.providersEndPoint + `?not_paginated=true`, {
     headers: {
-      Authorization: `Token ${token}`,
+      Authorization: `Token ${token.token}`,
     },
   }).then(async (res) => {
     const providers = await res.json();

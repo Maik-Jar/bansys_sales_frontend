@@ -2,6 +2,7 @@
   import { urls } from "../../lib/utils/urls";
   import { navigateTo } from "svelte-router-spa";
   import { onMount } from "svelte";
+  import { hasPermission } from "../../lib/utils/functions";
   import {
     Button,
     Table,
@@ -32,7 +33,7 @@
       {
         method: "get",
         headers: {
-          Authorization: `Token ${token}`,
+          Authorization: `Token ${token.token}`,
         },
       }
     )
@@ -101,9 +102,14 @@
       >
     </Button>
   </form>
-  <Button size="sm" color="blue" pill on:click={() => navigateTo("/item_form")}
-    >Nuevo item</Button
-  >
+  {#if hasPermission("point_of_sales.add_item")}
+    <Button
+      size="sm"
+      color="blue"
+      pill
+      on:click={() => navigateTo("/item_form")}>Nuevo item</Button
+    >
+  {/if}
 </div>
 <div class="h-[35rem]">
   <Table shadow hoverable={true}>

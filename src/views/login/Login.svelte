@@ -20,7 +20,7 @@
     }).then(async (res) => {
       if (res.ok) {
         const data = await res.json();
-        localStorage.setItem("token", JSON.stringify(data.token));
+        localStorage.setItem("token", JSON.stringify(data));
         localStorage.setItem("isLogin", JSON.stringify(true));
         navigateTo("/");
       } else {

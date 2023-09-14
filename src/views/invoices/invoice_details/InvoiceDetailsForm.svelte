@@ -1,8 +1,6 @@
 <script>
   import { isNumeric } from "../../../lib/utils/functions";
-  import { urls } from "../../../lib/utils/urls";
   import { taxes, items } from "../../../lib/stores/stores";
-  import { onMount } from "svelte";
   import Swal from "sweetalert2";
   import MultiSelect from "svelte-multiselect";
   import {
@@ -20,19 +18,42 @@
   } from "flowbite-svelte";
 
   export let invoiceDetails = [];
+  export let invoiceActive = true;
   export let activeInvoiceDetails = false;
   export let invoiceDetailsToDelete = [];
   export let invoiceHeaderDiscont = 0.0;
+  export let totalAmount = 0;
+  export let calculateChange;
+  export const addInvoiceDetailsAtSelectedItem = (invoice_details) => {
+    invoice_details.map((e) => {
+      const addItem = $items.find((i) => i.id == e?.item.id);
+      selectedItems = [
+        ...selectedItems,
+        {
+          label: addItem.name + " / " + addItem.price,
+          value: {
+            id: addItem.id,
+            name: addItem.name,
+            price: addItem.price,
+            tax: addItem.tax,
+          },
+        },
+      ];
+    });
+  };
 
-  let ui_libs = [];
-
+  let multiselectOptions = $items.map((e) => {
+    return {
+      label: e.name + " / " + e.price,
+      value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
+    };
+  });
   let selectedItems = [];
   let itemID;
   let counter = 0;
   let defaultModal = false;
   let totalQuantity = 0;
   let totalTax = 0;
-  let totalAmount = 0;
   let totalDiscount = 0.0;
 
   const customColorsClassDark = {
@@ -45,6 +66,7 @@
     calculateTotalQuantity();
     calculateTotalAmount();
     calulateTotalDiscount();
+    calculateChange();
   }
 
   function calculateDiscount(price, quantity, discount) {
@@ -230,12 +252,12 @@
 
     if (typeof rowId === "object") {
       invoiceDetails = invoiceDetails.filter((e) => {
-        if (e?.item.id !== rowId?.value.id) {
-          return e;
-        }
-
         if (isNumeric(e.id)) {
           invoiceDetailsToDelete = [...invoiceDetailsToDelete, e];
+        }
+
+        if (e?.item.id !== rowId?.value.id) {
+          return e;
         }
       });
     } else {
@@ -264,32 +286,6 @@
         })
     }
   }
-
-  onMount((e) => {
-    if (invoiceDetails.length > 0) {
-      invoiceDetails.map((e) => {
-        const addItem = $items.find((i) => i.id == e?.item.id);
-        selectedItems = [
-          ...selectedItems,
-          {
-            label: addItem.name + " / " + addItem.price,
-            value: {
-              id: addItem.id,
-              name: addItem.name,
-              price: addItem.price,
-              tax: addItem.tax,
-            },
-          },
-        ];
-      });
-    }
-    ui_libs = $items.map((e) => {
-      return {
-        label: e.name + " / " + e.price,
-        value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
-      };
-    });
-  });
 </script>
 
 <form
@@ -310,12 +306,14 @@
         type="number"
         bind:value={itemID}
         class="dark:bg-gray-50 dark:text-black"
-        disabled={!activeInvoiceDetails}
+        disabled={!activeInvoiceDetails || !invoiceActive}
       />
     </ButtonGroup>
   </div>
-  <Button color="blue" type="submit" disabled={!activeInvoiceDetails}
-    >Agregar</Button
+  <Button
+    color="blue"
+    type="submit"
+    disabled={!activeInvoiceDetails || !invoiceActive}>Agregar</Button
   >
 </form>
 <div
@@ -364,6 +362,7 @@
               value={invoiceDetail.quantity}
               on:input={(e) => updateQuantity(invoiceDetail.id, e.target)}
               required
+              disabled={!invoiceActive}
             /></TableBodyCell
           >
           <TableBodyCell class="text-center w-[10%] py-1">
@@ -380,6 +379,7 @@
               value={invoiceDetail.discount}
               on:blur={(e) => updateDiscount(invoiceDetail.id, e.target)}
               required
+              disabled={!invoiceActive}
             /></TableBodyCell
           >
           <TableBodyCell class="text-center w-[10%] py-1">
@@ -393,6 +393,7 @@
               size="xs"
               color="red"
               on:click={() => deleteRow(invoiceDetail.id)}
+              disabled={!invoiceActive}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -451,7 +452,7 @@
       liOptionClass="dark:text-black"
       ulSelectedClass=" h-20"
       bind:selected={selectedItems}
-      options={ui_libs}
+      options={multiselectOptions}
       on:add={() => addRow(selectedItems)}
       on:remove={(e) => deleteRow(e?.detail.option)}
       on:removeAll={(e) => deleteRow(undefined, true)}

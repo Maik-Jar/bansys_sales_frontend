@@ -3,6 +3,7 @@
   import { navigateTo } from "svelte-router-spa";
   import { onMount } from "svelte";
   import { receipt } from "../../lib/stores/stores";
+  import { hasPermission } from "../../lib/utils/functions";
   import {
     Button,
     Table,
@@ -14,6 +15,7 @@
     PaginationItem,
     Search,
     A,
+    Badge,
   } from "flowbite-svelte";
 
   export let currentRoute;
@@ -33,7 +35,7 @@
       {
         method: "get",
         headers: {
-          Authorization: `Token ${token}`,
+          Authorization: `Token ${token.token}`,
         },
       }
     )
@@ -63,6 +65,55 @@
       page--;
       getInvoices(page);
     }
+  }
+
+  function calculateDiscount(price, quantity, discount) {
+    let amountForDiscount = 0;
+    if (discount < 0) {
+      return amountForDiscount;
+    }
+    // prettier-ignore
+    if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
+      // prettier-ignore
+      amountForDiscount = ((price * quantity) * discount)
+    } else {
+      // prettier-ignore
+      amountForDiscount = discount
+    }
+
+    return amountForDiscount;
+  }
+
+  function calculateTax(invoiceDetail, invoiceDetailID) {
+    const invoiceDetailObject = invoiceDetail.find(
+      (e) => e.id === invoiceDetailID
+    );
+    // prettier-ignore
+    return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
+  }
+
+  function calculateAmount(invoiceDetail, invoiceDetailID) {
+    const invoiceDetailObject = invoiceDetail.find(
+      (e) => e.id === invoiceDetailID
+    );
+
+    return (
+      calculateTax(invoiceDetail, invoiceDetailID) +
+      (invoiceDetailObject.price * invoiceDetailObject.quantity -
+        calculateDiscount(
+          invoiceDetailObject.price,
+          invoiceDetailObject.quantity,
+          invoiceDetailObject.discount
+        ))
+    );
+  }
+
+  function calculateTotalAmount(invoiceDetails) {
+    let sumAmounts = 0;
+    invoiceDetails.map((e) => {
+      sumAmounts += calculateAmount(invoiceDetails, e.id);
+    });
+    return sumAmounts;
   }
 
   onMount(() => {
@@ -102,12 +153,14 @@
       >
     </Button>
   </form>
-  <Button
-    size="sm"
-    color="blue"
-    pill
-    on:click={() => navigateTo("/invoice_form")}>Nueva factura</Button
-  >
+  {#if hasPermission("point_of_sales.add_invoiceheader")}
+    <Button
+      size="sm"
+      color="blue"
+      pill
+      on:click={() => navigateTo("/invoice_form")}>Nueva factura</Button
+    >
+  {/if}
 </div>
 <div class="h-[35rem]">
   <Table shadow hoverable={true}>
@@ -120,6 +173,7 @@
       >
       <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
       <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
+      <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
       <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass={"divide-y min-h-full"}>
@@ -141,12 +195,19 @@
             >{new Intl.NumberFormat("es-DO", {
               style: "currency",
               currency: "DOP",
-            }).format(invoice.total)}</TableBodyCell
+            }).format(
+              calculateTotalAmount(invoice.invoice_detail)
+            )}</TableBodyCell
           >
           <TableBodyCell class={"w-[12%] p-2 text-center"}
             >{new Date(invoice.date_created).toLocaleString(
               "es-DO"
             )}</TableBodyCell
+          >
+          <TableBodyCell class={"w-[10%] p-2 text-center"}
+            ><Badge rounded color={invoice.status ? "green" : "red"}
+              >{invoice.status ? "Activo" : "Inactivo"}</Badge
+            ></TableBodyCell
           >
           <TableBodyCell class={"w-[10%] p-2 text-center"}>
             <A
@@ -158,7 +219,7 @@
         </TableBodyRow>
       {:else}
         <TableBodyRow>
-          <TableBodyCell colspan="7" class={" text-center"}
+          <TableBodyCell colspan="8" class={" text-center"}
             >NO HAY DATOS</TableBodyCell
           >
         </TableBodyRow>

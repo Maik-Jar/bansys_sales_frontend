@@ -3,6 +3,7 @@
   import { navigateTo } from "svelte-router-spa";
   import { onMount } from "svelte";
   import { documentsTypes } from "../../lib/stores/stores";
+  import { hasPermission } from "../../lib/utils/functions";
   import {
     Button,
     Table,
@@ -33,7 +34,7 @@
       {
         method: "get",
         headers: {
-          Authorization: `Token ${token}`,
+          Authorization: `Token ${token.token}`,
         },
       }
     )
@@ -102,12 +103,14 @@
       >
     </Button>
   </form>
-  <Button
-    size="sm"
-    color="blue"
-    pill
-    on:click={() => navigateTo("/provider_form")}>Nuevo proveedor</Button
-  >
+  {#if hasPermission("point_of_sales.add_provider")}
+    <Button
+      size="sm"
+      color="blue"
+      pill
+      on:click={() => navigateTo("/provider_form")}>Nuevo proveedor</Button
+    >
+  {/if}
 </div>
 <div class="h-[35rem]">
   <Table shadow hoverable={true}>
@@ -130,7 +133,7 @@
           >
 
           <TableBodyCell class={"w-[10%] p-2 text-center"}
-            >{$documentsTypes.find((e) => e.id === provider.document_type)
+            >{$documentsTypes.find((e) => e.id === provider?.document_type)
               .name}</TableBodyCell
           >
           <TableBodyCell class={"w-[10%] p-2 text-center"}

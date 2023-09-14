@@ -1,5 +1,6 @@
 <script>
   import { navigateTo } from "svelte-router-spa";
+  import { hasPermission } from "../../lib/utils/functions";
   import Swal from "sweetalert2";
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
@@ -34,7 +35,7 @@
           `?customer_id=${currentRoute.namedParams.id}`,
         {
           headers: {
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
         }
       )
@@ -51,6 +52,7 @@
           }
         })
         .catch((error) => {
+          Swal.fire("Error interno", `${error.message}`, "error");
           console.log(error.message);
         });
     }
@@ -73,7 +75,7 @@
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
           body: JSON.stringify(customerToSave),
         })
@@ -85,12 +87,13 @@
               Swal.fire("¡Nuevo cliente creado!", "", "success");
               isEditable = true;
             } else {
-              Swal.fire("Solicitud incorrecta.", "", "error");
-              console.log(await res.json());
+              const message = await res.json();
+              Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
+              console.log(message);
             }
           })
           .catch((error) => {
-            Swal.fire(`${error.message}`, "", "error");
+            Swal.fire("Error interno", `${error.message}`, "error");
             console.log(error.message);
           });
       } else if (result.isDenied) {
@@ -119,7 +122,7 @@
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              Authorization: `Token ${token}`,
+              Authorization: `Token ${token.token}`,
             },
             body: JSON.stringify(customerToSave),
           }
@@ -128,12 +131,13 @@
             if (res.ok) {
               Swal.fire("¡Datos guardados!", "", "success");
             } else {
-              Swal.fire("Solicitud incorrecta.", "", "error");
-              console.log(await res.json());
+              const message = await res.json();
+              Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
+              console.log(message);
             }
           })
           .catch((error) => {
-            Swal.fire(`${error.message}`, "", "error");
+            Swal.fire("Error interno", `${error.message.detail}`, "error");
           });
       } else if (result.isDenied) {
         Swal.fire("Operación descartada.", "", "info");
@@ -251,5 +255,7 @@
   <Button color="dark" on:click={() => navigateTo("/customers_manager")}
     >Volver</Button
   >
-  <Button color="green" type="submit" form="form_customer">Guardar</Button>
+  {#if hasPermission("point_of_sales.add_customer") || hasPermission("point_of_sales.change_customer")}
+    <Button color="green" type="submit" form="form_customer">Guardar</Button>
+  {/if}
 </div>

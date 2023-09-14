@@ -14,6 +14,7 @@ const pointSales = {
   itemsList: "point_of_sales/api/items_list",
   salesTypesEndpoint: "point_of_sales/api/sales_types",
   paymentsMethodsEndpoint: "point_of_sales/api/payments_methods",
+  printInvoiceEndpoint: "point_of_sales/api/invoices/print_invoice",
 };
 
 export const urls = {

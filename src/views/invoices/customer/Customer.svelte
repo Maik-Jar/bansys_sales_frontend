@@ -16,18 +16,45 @@
   } from "flowbite-svelte";
 
   export let customer;
+  export let invoiceActive;
+  export const getCustomerForId = () => {
+    const token = JSON.parse(localStorage.getItem("token"));
+    fetch(
+      urls.backendRoute +
+        urls.customersEndPoint +
+        `?customer_id=${customer.id}`,
+      {
+        method: "get",
+        headers: {
+          Authorization: `Token ${token.token}`,
+        },
+      }
+    )
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          dataCustomer = data;
+        } else {
+          const data = await res.json();
+          console.log(data);
+        }
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+  };
+  export let dataCustomer = {
+    id: null,
+    name: "",
+    document_id: "",
+    phone: "",
+  };
 
   const customColorsClassDark = {
     label: "dark:text-gray-500",
     input: "dark:bg-gray-50 dark:text-black",
   };
 
-  let dataCustomer = {
-    id: null,
-    name: "",
-    document_id: "",
-    phone: "",
-  };
   let customersObject = [];
   let openModal = false;
 
@@ -40,26 +67,28 @@
       {
         method: "get",
         headers: {
-          Authorization: `Token ${token}`,
+          Authorization: `Token ${token.token}`,
         },
       }
     )
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
-          customersObject = data?.results;
-          if (customersObject.length > 1) {
-            openModal = true;
-          } else if (customersObject.length == 0) {
-            Swal.fire(
-              "No se encontro clientes que coincidan con los datos suministrados.",
-              "",
-              "error"
-            );
-          } else {
-            dataCustomer = customersObject[0];
-            customer.id = dataCustomer?.id;
-            customer.name = dataCustomer?.name;
+          if (data?.results) {
+            customersObject = data?.results;
+            if (customersObject.length > 1) {
+              openModal = true;
+            } else if (customersObject.length == 0) {
+              Swal.fire(
+                "No se encontro clientes que coincidan con los datos suministrados.",
+                "",
+                "error"
+              );
+            } else {
+              dataCustomer = customersObject[0];
+              customer.id = dataCustomer?.id;
+              customer.name = dataCustomer?.name;
+            }
           }
         } else {
           const data = await res.json();
@@ -92,6 +121,7 @@
       id="customer"
       class="capitalize {customColorsClassDark.input}"
       bind:value={dataCustomer.name}
+      disabled={!invoiceActive}
       on:input={(e) => {
         dataCustomer.phone = "";
         dataCustomer.document_id = "";
@@ -110,6 +140,7 @@
         id="customerDocumentID"
         class={customColorsClassDark.input}
         bind:value={dataCustomer.document_id}
+        disabled={!invoiceActive}
         on:input={(e) => {
           dataCustomer.phone = "";
           dataCustomer.name = "";
@@ -127,6 +158,7 @@
         id="customerContac"
         class={customColorsClassDark.input}
         bind:value={dataCustomer.phone}
+        disabled={!invoiceActive}
         on:input={(e) => {
           dataCustomer.name = "";
           dataCustomer.document_id = "";
@@ -136,7 +168,12 @@
       />
     </div>
   </div>
-  <Button color="blue" type="submit" form="form_search_customer">Buscar</Button>
+  <Button
+    color="blue"
+    type="submit"
+    form="form_search_customer"
+    disabled={!invoiceActive}>Buscar</Button
+  >
 </form>
 
 <Modal title="Clientes encontrados" bind:open={openModal} autoclose>

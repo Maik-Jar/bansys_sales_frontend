@@ -32,7 +32,7 @@ const protectedRoutes = [
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
   },
   {
-    name: "customers_manager",
+    name: "/customers_manager",
     component: CustomerManager,
     layout: MainAdminLayout,
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
@@ -44,7 +44,7 @@ const protectedRoutes = [
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
   },
   {
-    name: "providers_manager",
+    name: "/providers_manager",
     component: ProvidersManager,
     layout: MainAdminLayout,
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
@@ -56,7 +56,7 @@ const protectedRoutes = [
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
   },
   {
-    name: "items_manager",
+    name: "/items_manager",
     component: ItemsManager,
     layout: MainAdminLayout,
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
@@ -68,7 +68,7 @@ const protectedRoutes = [
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
   },
   {
-    name: "invoices_manager",
+    name: "/invoices_manager",
     component: InvociesManager,
     layout: MainAdminLayout,
     onlyIf: { guard: isAuthenticated, redirect: "/login" },

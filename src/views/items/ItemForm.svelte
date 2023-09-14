@@ -4,6 +4,7 @@
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
   import { providers, taxes } from "../../lib/stores/stores";
+  import { hasPermission } from "../../lib/utils/functions";
   import {
     Heading,
     Label,
@@ -46,7 +47,7 @@
           `?item_id=${currentRoute.namedParams.id}`,
         {
           headers: {
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
         }
       )
@@ -88,7 +89,7 @@
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
           body: JSON.stringify(itemToSave),
         })
@@ -96,16 +97,16 @@
             if (res.ok) {
               const data = await res.json();
               item.id = data.id;
-
               Swal.fire("¡Nuevo item creado!", "", "success");
               isEditable = true;
             } else {
-              Swal.fire("Solicitud incorrecta.", "", "error");
-              console.log(await res.json());
+              const message = await res.json();
+              Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
+              console.log(message);
             }
           })
           .catch((error) => {
-            Swal.fire(`${error.message}`, "", "error");
+            Swal.fire("Error interno", `${error.message}`, "error");
             console.log(error.message);
           });
       } else if (result.isDenied) {
@@ -130,7 +131,7 @@
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
           body: JSON.stringify(itemToSave),
         })
@@ -138,12 +139,13 @@
             if (res.ok) {
               Swal.fire("¡Datos guardados!", "", "success");
             } else {
-              Swal.fire("Solicitud incorrecta.", "", "error");
-              console.log(await res.json());
+              const message = await res.json();
+              Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
+              console.log(message);
             }
           })
           .catch((error) => {
-            Swal.fire(`${error.message}`, "", "error");
+            Swal.fire("Error interno", `${error.message}`, "error");
           });
       } else if (result.isDenied) {
         Swal.fire("Operación descartada.", "", "info");
@@ -293,5 +295,7 @@
   <Button color="dark" on:click={() => navigateTo("/items_manager")}
     >Volver</Button
   >
-  <Button color="green" type="submit" form="form_item">Guardar</Button>
+  {#if hasPermission("point_of_sales.add_item") || hasPermission("point_of_sales.change_item")}
+    <Button color="green" type="submit" form="form_item">Guardar</Button>
+  {/if}
 </div>

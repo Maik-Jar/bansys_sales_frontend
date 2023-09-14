@@ -3,9 +3,11 @@
   import Swal from "sweetalert2";
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
-  import { receipt, salesTypes, paymentMethods } from "../../lib/stores/stores";
+  import { receipt, salesTypes } from "../../lib/stores/stores";
   import InvoiceDetailsForm from "./invoice_details/InvoiceDetailsForm.svelte";
   import Customer from "./customer/Customer.svelte";
+  import Payment from "./payment/Payment.svelte";
+  import { hasPermission } from "../../lib/utils/functions";
   import {
     Heading,
     Label,
@@ -16,6 +18,7 @@
     ButtonGroup,
     Textarea,
     Badge,
+    Span,
   } from "flowbite-svelte";
 
   export let currentRoute;
@@ -47,6 +50,11 @@
   let payments = [];
   let invoiceDetailsToDelete = [];
   let isEditable = false;
+  let change = 0;
+  let totalAmount = 0;
+  let totalPayments = 0;
+  let getCustomerForIdonChild;
+  let addInvoiceDetailsAtSelectedItem;
 
   $: activeInvoiceDetails = customer?.id ? true : false;
 
@@ -56,16 +64,23 @@
       fetch(
         urls.backendRoute +
           urls.invoicesEndPoint +
-          `?invoice_id=${currentRoute.namedParams.id}`,
+          `?invoice_header_id=${currentRoute.namedParams.id}`,
         {
           headers: {
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
         }
       )
         .then(async (res) => {
           if (res.ok) {
             const data = await res.json();
+            //customer
+            customer.id = await data.customer?.id;
+            customer.name = data.customer?.name;
+            //invoice_details
+            invoiceDetails = await data.invoice_detail;
+            //payments
+            payments = data.payment;
             //invoice_header
             invoiceHeader.id = data.id;
             invoiceHeader.number = data.number;
@@ -74,18 +89,19 @@
             invoiceHeader.discount = data.discount;
             invoiceHeader.sales_type = data.sales_type;
             invoiceHeader.comment = data.comment;
-            invoiceHeader.date_created = data.date_created;
-            invoiceHeader.date_updated = data.date_updated;
+            invoiceHeader.date_created = new Date(
+              data.date_created
+            ).toLocaleString("es-DO");
+            invoiceHeader.date_updated = new Date(
+              data.date_updated
+            ).toLocaleString("es-DO");
             invoiceHeader.user_created = data.user_created;
             invoiceHeader.user_updated = data.user_updated;
             invoiceHeader.status = data.status;
-            //customer
-            customer.id = data.customer?.id;
-            customer.name = data.customer?.name;
-            //payment
-            payments = data.payment;
-            //invoice_details
-            invoiceDetails = data.invoice_detail;
+
+            getCustomerForIdonChild();
+            calculateChange();
+            addInvoiceDetailsAtSelectedItem(invoiceDetails);
           }
         })
         .catch((error) => {
@@ -116,7 +132,7 @@
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
           body: JSON.stringify(invoiceToSave),
         })
@@ -126,19 +142,24 @@
               invoiceHeader.id = data.id;
               invoiceHeader.number = data.number;
               invoiceHeader.sequence_receipt = data.sequence_receipt;
-              invoiceHeader.date_created = data.date_created;
-              invoiceHeader.date_updated = data.date_updated;
+              invoiceHeader.date_created = new Date(
+                data.date_created
+              ).toLocaleString("es-DO");
+              invoiceHeader.date_updated = new Date(
+                data.date_updated
+              ).toLocaleString("es-DO");
               invoiceHeader.user_created = data.user_created;
 
               Swal.fire("¡Nueva factura creada!", "", "success");
               isEditable = true;
             } else {
-              Swal.fire("Solicitud incorrecta.", "", "error");
-              console.log(await res.json());
+              const message = await res.json();
+              Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
+              console.log(message);
             }
           })
           .catch((error) => {
-            Swal.fire(`${error.message}`, "", "error");
+            Swal.fire("Error interno", `${error.message}`, "error");
             console.log(error.message);
           });
       } else if (result.isDenied) {
@@ -152,7 +173,7 @@
       ...invoiceHeader,
       invoice_detail: invoiceDetails,
       customer: customer,
-      payment: payments,
+      invoice_detail_to_delete: invoiceDetailsToDelete,
     };
     Swal.fire({
       title: "¿Quieres guardar los datos?",
@@ -166,13 +187,13 @@
         fetch(
           urls.backendRoute +
             urls.invoicesEndPoint +
-            `?invoice_id=${invoiceHeader.id}`,
+            `?invoice_header_id=${invoiceHeader.id}`,
           {
             method: "put",
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              Authorization: `Token ${token}`,
+              Authorization: `Token ${token.token}`,
             },
             body: JSON.stringify(invoiceToSave),
           }
@@ -183,12 +204,55 @@
               invoiceHeader.date_updated = data.date_updated;
               Swal.fire("¡Datos guardados!", "", "success");
             } else {
-              Swal.fire("Solicitud incorrecta.", "", "error");
-              console.log(await res.json());
+              const message = await res.json();
+              Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
+              console.log(message);
             }
           })
           .catch((error) => {
-            Swal.fire(`${error.message}`, "", "error");
+            Swal.fire("Error interno", `${error.message}`, "error");
+          });
+      } else if (result.isDenied) {
+        Swal.fire("Operación descartada.", "", "info");
+      }
+    });
+  }
+
+  function inactivateInvoice() {
+    Swal.fire({
+      title: "¿Esta seguro que desea inactivar esta factura?",
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: "Si",
+      denyButtonText: `¡No, Descartalo!`,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const token = JSON.parse(localStorage.getItem("token"));
+        fetch(
+          urls.backendRoute +
+            urls.invoicesEndPoint +
+            `?invoice_header_id=${invoiceHeader.id}`,
+          {
+            method: "delete",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+              Authorization: `Token ${token.token}`,
+            },
+          }
+        )
+          .then(async (res) => {
+            if (res.ok) {
+              invoiceHeader.status = false;
+              Swal.fire("¡Factura inactivada!", "", "success");
+            } else {
+              const message = await res.json();
+              Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
+              console.log(message);
+            }
+          })
+          .catch((error) => {
+            Swal.fire("Error interno", `${error.message}`, "error");
           });
       } else if (result.isDenied) {
         Swal.fire("Operación descartada.", "", "info");
@@ -219,6 +283,76 @@
     });
   }
 
+  function calculateChange() {
+    change = totalPayments - totalAmount;
+
+    // if (change < 0) {
+    //   change = 0;
+    // }
+  }
+
+  function validateCustomer() {
+    if (!customer.id) {
+      Swal.fire(
+        "Escoga el cliente al que se le realizará la factura.",
+        "",
+        "warning"
+      );
+      return false;
+    }
+    return true;
+  }
+
+  function validateDetails() {
+    if (!(invoiceDetails.length > 0)) {
+      Swal.fire("Inserte al menos un item para facturar.", "", "warning");
+      return false;
+    }
+    return true;
+  }
+
+  function validatePayments() {
+    if (invoiceHeader.sales_type === 1 && !(totalPayments >= totalAmount)) {
+      Swal.fire(
+        "Venta al contado",
+        "El total pagado debe ser igual o mayor que el monto a pagar.",
+        "warning"
+      );
+      return false;
+    }
+    return true;
+  }
+
+  function validations(callback) {
+    const allValidations = {
+      customer: validateCustomer,
+      invoiceDetails: validateDetails,
+      payments: validatePayments,
+    };
+
+    let isValid = false;
+
+    for (let key of Object.values(allValidations)) {
+      isValid = key();
+      if (!isValid) {
+        return;
+      }
+    }
+
+    callback();
+  }
+
+  function printInvoice(invoiceID) {
+    if (invoiceHeader.status) {
+      window.open(
+        urls.backendRoute +
+          urls.printInvoiceEndpoint +
+          `?invoice_header_id=${invoiceID}&papel_size="A4"`,
+        "_blank"
+      );
+    }
+  }
+
   onMount(async () => {
     isEditable = (await currentRoute.namedParams.id) ? true : false;
     getInvoice();
@@ -229,23 +363,16 @@
   id="form_invoice"
   class="pl-0 p-4 relative"
   on:submit|preventDefault|stopPropagation={isEditable
-    ? updateInvoice
-    : createInvoice}
+    ? () => validations(updateInvoice)
+    : () => validations(createInvoice)}
 >
   <div
-    class="flex justify-between pb-5 mb-2 border-b-4 border-gray-100 dark:border-gray-400"
+    class="flex justify-between items-center pb-5 mb-2 border-b-4 border-gray-100 dark:border-gray-400"
   >
-    <div>
-      <Label for="numberInv" class="block mb-2 {customColorsClassDark.label}"
-        >No. Factura</Label
-      >
-      <Input
-        id="numberInv"
-        class="w-[75%] text-center {customColorsClassDark.input}"
-        bind:value={invoiceHeader.number}
-        readonly
-      />
-    </div>
+    <Heading tag="h4" class="w-1/2 {customColorsClassDark.label} self-end"
+      >No. Factura: <Span highlight>{invoiceHeader.number}</Span></Heading
+    >
+
     <div class="flex space-x-3">
       <div>
         <Label
@@ -268,7 +395,7 @@
         <Input
           id="dateUpdated"
           class="text-center {customColorsClassDark.input}"
-          bind:value={invoiceHeader.id}
+          bind:value={invoiceHeader.date_updated}
           readonly
         />
       </div>
@@ -281,17 +408,27 @@
     <div
       class="flex flex-col rounded-lg border-2 border-gray-500 row-span-3 shadow-lg p-2"
     >
-      <Customer bind:customer />
+      <Customer
+        bind:customer
+        bind:getCustomerForId={getCustomerForIdonChild}
+        invoiceActive={invoiceHeader.status}
+      />
     </div>
-    <Badge large color={invoiceHeader.status ? "green" : "red"}
-      >Estatus factura: {invoiceHeader.status ? "Activo" : "Inactivo"}</Badge
+    <Heading tag="h5" class=" {customColorsClassDark.label}"
+      >Estatus factura: <Badge
+        large
+        color={invoiceHeader.status ? "green" : "red"}
+        >{invoiceHeader.status ? "Activo" : "Inactivo"}</Badge
+      ></Heading
     >
+
     <Label class={customColorsClassDark.label}
       >Tipo de comprobante
       <Select
         class="mt-2 {customColorsClassDark.input}"
         bind:value={invoiceHeader.receipt_type}
-        required
+        required={!isEditable}
+        disabled={isEditable}
       >
         {#each $receipt as { id, name }}
           <option value={id}>{name}</option>
@@ -315,7 +452,7 @@
           <Input
             id="receiptSequence"
             class={customColorsClassDark.input}
-            bind:value={invoiceHeader.sequence_receipt}
+            value={invoiceHeader.sequence_receipt?.sequence}
             readonly
           />
         </ButtonGroup>
@@ -327,10 +464,11 @@
         >
         <Input
           id="recepitExpiration"
+          type="text"
           class={customColorsClassDark.input}
           value={$receipt.find((e) => e.id === invoiceHeader.receipt_type)
             ?.expiration}
-          type="text"
+          readonly
         />
       </div>
     </div>
@@ -338,10 +476,14 @@
   <InvoiceDetailsForm
     bind:invoiceDetails
     bind:invoiceDetailsToDelete
+    bind:totalAmount
+    bind:addInvoiceDetailsAtSelectedItem
     bind:invoiceHeaderDiscont={invoiceHeader.discount}
+    invoiceActive={invoiceHeader.status}
     {activeInvoiceDetails}
+    {calculateChange}
   />
-  <div class="grid grid-cols-4 gap-y-4">
+  <div class="grid grid-cols-4 gap-4">
     <div class="col-start-1 row-span-3">
       <Label for="textarea-id" class="mb-2 {customColorsClassDark.label}"
         >Comentarios</Label
@@ -352,10 +494,11 @@
         rows="9"
         name="message"
         bind:value={invoiceHeader.comment}
+        disabled={!invoiceHeader.status}
       />
     </div>
-    <div class="col-start-4">
-      <Label for="price" class="block mb-2 {customColorsClassDark.label}"
+    <div class="col-start-3">
+      <Label for="price" class="mb-2 {customColorsClassDark.label}"
         >Descuento General</Label
       >
       <ButtonGroup class="w-full">
@@ -367,35 +510,67 @@
           type="number"
           bind:value={invoiceHeader.discount}
           on:blur={appliyGeneralDiscount}
-          required
+          required={invoiceHeader.status}
+          disabled={!invoiceHeader.status}
         />
       </ButtonGroup>
     </div>
-    <Label class="{customColorsClassDark.label} col-start-4"
+    <Label class="{customColorsClassDark.label} col-start-3"
       >Tipo de venta
       <Select
         class="mt-2 {customColorsClassDark.input}"
         bind:value={invoiceHeader.sales_type}
-        required
+        required={invoiceHeader.status}
+        disabled={!invoiceHeader.status}
       >
         {#each $salesTypes as { id, name }}
           <option value={id}>{name}</option>
         {/each}
       </Select>
     </Label>
-    <Label class="{customColorsClassDark.label} col-start-4"
-      >Metodo de pago
-      <Select class="mt-2 {customColorsClassDark.input}" required>
-        {#each $paymentMethods as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
-      </Select>
-    </Label>
+    <div class="col-start-3 text-center">
+      <Heading tag="h3" class=" {customColorsClassDark.label}"
+        >Cambio: <Span highlight
+          >{Intl.NumberFormat("es-DO", {
+            style: "currency",
+            currency: "DOP",
+          }).format(change)}</Span
+        ></Heading
+      >
+    </div>
+    <Payment
+      bind:payments
+      bind:totalPayments
+      {calculateChange}
+      {invoiceDetails}
+      {invoiceHeader}
+    />
   </div>
 </form>
 <div class="flex space-x-3 mt-5">
   <Button color="dark" on:click={() => navigateTo("/invoices_manager")}
     >Volver</Button
   >
-  <Button color="green" type="submit" form="form_invoice">Guardar</Button>
+  {#if hasPermission("point_of_sales.add_invoiceheader") || hasPermission("point_of_sales.change_invoiceheader")}
+    <Button
+      color="green"
+      type="submit"
+      form="form_invoice"
+      disabled={!invoiceHeader.status}>Guardar</Button
+    >
+  {/if}
+  {#if hasPermission("point_of_sales.delete_invoiceheader")}
+    <Button
+      color="red"
+      type="button"
+      on:click={inactivateInvoice}
+      disabled={!invoiceHeader.status || !invoiceHeader.id}>Inactivar</Button
+    >
+  {/if}
+  <Button
+    color="blue"
+    type="button"
+    on:click={() => printInvoice(invoiceHeader.id)}
+    disabled={!invoiceHeader.status || !invoiceHeader.id}>Imprimir</Button
+  >
 </div>
