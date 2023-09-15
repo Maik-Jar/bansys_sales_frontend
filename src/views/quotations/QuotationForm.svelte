@@ -3,10 +3,9 @@
   import Swal from "sweetalert2";
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
-  import { receipt, salesTypes } from "../../lib/stores/stores";
-  import InvoiceDetailsForm from "./invoice_details/InvoiceDetailsForm.svelte";
+  import { salesTypes } from "../../lib/stores/stores";
+  import QuotationDetailsForm from "./quotaion_details/QuotationDetailsForm.svelte";
   import Customer from "./customer/Customer.svelte";
-  import Payment from "./payment/Payment.svelte";
   import { hasPermission } from "../../lib/utils/functions";
   import {
     Heading,
@@ -27,11 +26,9 @@
     label: "dark:text-gray-500",
     input: "dark:bg-gray-50 dark:text-black",
   };
-  const invoiceHeader = Object.seal({
+  const quotationHeader = Object.seal({
     id: null,
     number: null,
-    receipt: Object.seal({ id: 1 }),
-    receipt_sequence: null,
     discount: 0.0,
     sales_type: 1,
     comment: null,
@@ -44,27 +41,26 @@
 
   let customer = Object.seal({
     id: null,
-    name: null,
+    name: "",
+    document_id: "",
+    phone: "",
   });
-  let invoiceDetails = [];
-  let payments = [];
-  let invoiceDetailsToDelete = [];
+  let quotationsDetails = [];
+  let quotationsDetailsToDelete = [];
   let isEditable = false;
-  let change = 0;
   let totalAmount = 0;
-  let totalPayments = 0;
-  let getCustomerForIdonChild;
-  let addInvoiceDetailsAtSelectedItem;
+  //   let getCustomerForIdonChild;
+  let addQuotationDetailsAtSelectedItem;
 
-  $: activeInvoiceDetails = customer?.id ? true : false;
+  $: activeQuotationDetails = customer?.name ? true : false;
 
-  function getInvoice() {
+  function getQuotation() {
     if (isEditable) {
       const token = JSON.parse(localStorage.getItem("token"));
       fetch(
         urls.backendRoute +
-          urls.invoicesEndPoint +
-          `?invoice_header_id=${currentRoute.namedParams.id}`,
+          urls.quotaionsEndPoint +
+          `?quotation_header_id=${currentRoute.namedParams.id}`,
         {
           headers: {
             Authorization: `Token ${token.token}`,
@@ -77,31 +73,28 @@
             //customer
             customer.id = await data.customer?.id;
             customer.name = data.customer?.name;
-            //invoice_details
-            invoiceDetails = await data.invoice_detail;
-            //payments
-            payments = data.payment;
-            //invoice_header
-            invoiceHeader.id = data.id;
-            invoiceHeader.number = data.number;
-            // invoiceHeader.receipt = data.receipt;
-            invoiceHeader.receipt_sequence = data.receipt_sequence;
-            invoiceHeader.discount = data.discount;
-            invoiceHeader.sales_type = data.sales_type;
-            invoiceHeader.comment = data.comment;
-            invoiceHeader.date_created = new Date(
+            customer.document_id = data.customer?.document_id;
+            customer.phone = data.customer?.phone;
+            //quotation_details
+            quotationsDetails = await data.quotation_detail;
+            //quotation_header
+            quotationHeader.id = data.id;
+            quotationHeader.number = data.number;
+            quotationHeader.discount = data.discount;
+            quotationHeader.sales_type = data.sales_type;
+            quotationHeader.comment = data.comment;
+            quotationHeader.date_created = new Date(
               data.date_created
             ).toLocaleString("es-DO");
-            invoiceHeader.date_updated = new Date(
+            quotationHeader.date_updated = new Date(
               data.date_updated
             ).toLocaleString("es-DO");
-            invoiceHeader.user_created = data.user_created;
-            invoiceHeader.user_updated = data.user_updated;
-            invoiceHeader.status = data.status;
+            quotationHeader.user_created = data.user_created;
+            quotationHeader.user_updated = data.user_updated;
+            quotationHeader.status = data.status;
 
-            getCustomerForIdonChild();
-            calculateChange();
-            addInvoiceDetailsAtSelectedItem(invoiceDetails);
+            // getCustomerForIdonChild();
+            addQuotationDetailsAtSelectedItem(quotationsDetails);
           }
         })
         .catch((error) => {
@@ -110,15 +103,14 @@
     }
   }
 
-  function createInvoice() {
-    let invoiceToSave = {
-      ...invoiceHeader,
-      invoice_detail: invoiceDetails,
+  function createQuotation() {
+    let quotationToSave = {
+      ...quotationHeader,
+      quotation_detail: quotationsDetails,
       customer: customer,
-      payment: payments,
     };
     Swal.fire({
-      title: "¿Quieres crear esta nueva factura?",
+      title: "¿Quieres crear esta nueva cotización?",
       showDenyButton: true,
       showCancelButton: true,
       confirmButtonText: "Si",
@@ -127,30 +119,29 @@
       /* Read more about isConfirmed, isDenied below */
       if (result.isConfirmed) {
         const token = JSON.parse(localStorage.getItem("token"));
-        fetch(urls.backendRoute + urls.invoicesEndPoint, {
+        fetch(urls.backendRoute + urls.quotaionsEndPoint, {
           method: "post",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
             Authorization: `Token ${token.token}`,
           },
-          body: JSON.stringify(invoiceToSave),
+          body: JSON.stringify(quotationToSave),
         })
           .then(async (res) => {
             if (res.ok) {
               const data = await res.json();
-              invoiceHeader.id = data.id;
-              invoiceHeader.number = data.number;
-              invoiceHeader.receipt_sequence = data.receipt_sequence;
-              invoiceHeader.date_created = new Date(
+              quotationHeader.id = data.id;
+              quotationHeader.number = data.number;
+              quotationHeader.date_created = new Date(
                 data.date_created
               ).toLocaleString("es-DO");
-              invoiceHeader.date_updated = new Date(
+              quotationHeader.date_updated = new Date(
                 data.date_updated
               ).toLocaleString("es-DO");
-              invoiceHeader.user_created = data.user_created;
+              quotationHeader.user_created = data.user_created;
 
-              Swal.fire("¡Nueva factura creada!", "", "success");
+              Swal.fire("¡Nueva cotización creada!", "", "success");
               isEditable = true;
             } else {
               const message = await res.json();
@@ -168,12 +159,12 @@
     });
   }
 
-  function updateInvoice() {
-    let invoiceToSave = {
-      ...invoiceHeader,
-      invoice_detail: invoiceDetails,
+  function updateQuotation() {
+    let quotationToSave = {
+      ...quotationHeader,
+      quotation_detail: quotationsDetails,
       customer: customer,
-      invoice_detail_to_delete: invoiceDetailsToDelete,
+      quotation_detail_to_delete: quotationsDetailsToDelete,
     };
     Swal.fire({
       title: "¿Quieres guardar los datos?",
@@ -186,8 +177,8 @@
         const token = JSON.parse(localStorage.getItem("token"));
         fetch(
           urls.backendRoute +
-            urls.invoicesEndPoint +
-            `?invoice_header_id=${invoiceHeader.id}`,
+            urls.quotaionsEndPoint +
+            `?quotation_header_id=${quotationHeader.id}`,
           {
             method: "put",
             headers: {
@@ -195,13 +186,13 @@
               "Content-Type": "application/json",
               Authorization: `Token ${token.token}`,
             },
-            body: JSON.stringify(invoiceToSave),
+            body: JSON.stringify(quotationToSave),
           }
         )
           .then(async (res) => {
             if (res.ok) {
               const data = await res.json();
-              invoiceHeader.date_updated = data.date_updated;
+              quotationHeader.date_updated = data.date_updated;
               Swal.fire("¡Datos guardados!", "", "success");
             } else {
               const message = await res.json();
@@ -218,9 +209,9 @@
     });
   }
 
-  function inactivateInvoice() {
+  function inactivateQuotation() {
     Swal.fire({
-      title: "¿Esta seguro que desea inactivar esta factura?",
+      title: "¿Esta seguro que desea inactivar esta cotización?",
       showDenyButton: true,
       showCancelButton: true,
       confirmButtonText: "Si",
@@ -230,8 +221,8 @@
         const token = JSON.parse(localStorage.getItem("token"));
         fetch(
           urls.backendRoute +
-            urls.invoicesEndPoint +
-            `?invoice_header_id=${invoiceHeader.id}`,
+            urls.quotaionsEndPoint +
+            `?quotation_header_id=${quotationHeader.id}`,
           {
             method: "delete",
             headers: {
@@ -243,8 +234,8 @@
         )
           .then(async (res) => {
             if (res.ok) {
-              invoiceHeader.status = false;
-              Swal.fire("¡Factura inactivada!", "", "success");
+              quotationHeader.status = false;
+              Swal.fire("¡Cotaizaión inactivada!", "", "success");
             } else {
               const message = await res.json();
               Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
@@ -263,61 +254,42 @@
   function appliyGeneralDiscount() {
     let discountPerDetail = 0;
 
-    invoiceDetails = invoiceDetails.map((e) => {
+    quotationsDetails = quotationsDetails.map((e) => {
       e.discount = 0;
       return e;
     });
 
-    if (invoiceHeader.discount < 0) {
+    if (quotationHeader.discount < 0) {
       return;
     }
 
     discountPerDetail =
-      invoiceHeader.discount > 0 && invoiceHeader.discount < 1
-        ? invoiceHeader.discount
-        : invoiceHeader.discount / invoiceDetails.length;
+      quotationHeader.discount > 0 && quotationHeader.discount < 1
+        ? quotationHeader.discount
+        : quotationHeader.discount / quotationsDetails.length;
 
-    invoiceDetails = invoiceDetails.map((e) => {
+    quotationsDetails = quotationsDetails.map((e) => {
       e.discount = discountPerDetail;
       return e;
     });
   }
 
-  function calculateChange() {
-    change = totalPayments - totalAmount;
-
-    // if (change < 0) {
-    //   change = 0;
-    // }
-  }
-
   function validateCustomer() {
-    if (!customer.id) {
+    if (!customer.name) {
       Swal.fire(
-        "Escoga el cliente al que se le realizará la factura.",
+        "Escoga el cliente al que se le realizará la cotización.",
         "",
         "warning"
       );
       return false;
     }
+
     return true;
   }
 
   function validateDetails() {
-    if (!(invoiceDetails.length > 0)) {
-      Swal.fire("Inserte al menos un item para facturar.", "", "warning");
-      return false;
-    }
-    return true;
-  }
-
-  function validatePayments() {
-    if (invoiceHeader.sales_type === 1 && !(totalPayments >= totalAmount)) {
-      Swal.fire(
-        "Venta al contado",
-        "El total pagado debe ser igual o mayor que el monto a pagar.",
-        "warning"
-      );
+    if (!(quotationsDetails.length > 0)) {
+      Swal.fire("Inserte al menos un item para cotizar.", "", "warning");
       return false;
     }
     return true;
@@ -326,8 +298,7 @@
   function validations(callback) {
     const allValidations = {
       customer: validateCustomer,
-      invoiceDetails: validateDetails,
-      payments: validatePayments,
+      quotationDetails: validateDetails,
     };
 
     let isValid = false;
@@ -342,12 +313,12 @@
     callback();
   }
 
-  function printInvoice(invoiceID) {
-    if (invoiceHeader.status) {
+  function printQuotation(quotationID) {
+    if (quotationHeader.status) {
       window.open(
         urls.backendRoute +
-          urls.printInvoiceEndpoint +
-          `?invoice_header_id=${invoiceID}&papel_size="A4"`,
+          urls.printQuotationEndpoint +
+          `?quotation_header_id=${quotationID}&papel_size="A4"`,
         "_blank"
       );
     }
@@ -355,7 +326,7 @@
 
   onMount(async () => {
     isEditable = (await currentRoute.namedParams.id) ? true : false;
-    getInvoice();
+    getQuotation();
   });
 </script>
 
@@ -363,14 +334,16 @@
   id="form_invoice"
   class="pl-0 p-4 relative"
   on:submit|preventDefault|stopPropagation={isEditable
-    ? () => validations(updateInvoice)
-    : () => validations(createInvoice)}
+    ? () => validations(updateQuotation)
+    : () => validations(createQuotation)}
 >
   <div
     class="flex justify-between items-center pb-5 mb-2 border-b-4 border-gray-100 dark:border-gray-400"
   >
     <Heading tag="h4" class="w-1/2 {customColorsClassDark.label} self-end"
-      >No. Factura: <Span highlight>{invoiceHeader.number}</Span></Heading
+      >No. Cotización: <Span highlight
+        >{quotationHeader.number ? quotationHeader.number : ""}</Span
+      ></Heading
     >
 
     <div class="flex space-x-3">
@@ -382,7 +355,7 @@
         <Input
           id="dateCreated"
           class="text-center {customColorsClassDark.input}"
-          bind:value={invoiceHeader.date_created}
+          bind:value={quotationHeader.date_created}
           readonly
         />
       </div>
@@ -395,7 +368,7 @@
         <Input
           id="dateUpdated"
           class="text-center {customColorsClassDark.input}"
-          bind:value={invoiceHeader.date_updated}
+          bind:value={quotationHeader.date_updated}
           readonly
         />
       </div>
@@ -408,79 +381,24 @@
     <div
       class="flex flex-col rounded-lg border-2 border-gray-500 row-span-3 shadow-lg p-2"
     >
-      <Customer
-        bind:customer
-        bind:getCustomerForId={getCustomerForIdonChild}
-        invoiceActive={invoiceHeader.status}
-      />
+      <Customer bind:customer quotationActive={quotationHeader.status} />
     </div>
     <Heading tag="h5" class=" {customColorsClassDark.label}"
-      >Estatus factura: <Badge
+      >Estatus cotización: <Badge
         large
-        color={invoiceHeader.status ? "green" : "red"}
-        >{invoiceHeader.status ? "Activo" : "Inactivo"}</Badge
+        color={quotationHeader.status ? "green" : "red"}
+        >{quotationHeader.status ? "Activo" : "Inactivo"}</Badge
       ></Heading
     >
-
-    <Label class={customColorsClassDark.label}
-      >Tipo de comprobante
-      <Select
-        class="mt-2 {customColorsClassDark.input}"
-        bind:value={invoiceHeader.receipt.id}
-        required={!isEditable}
-        disabled={isEditable}
-      >
-        {#each $receipt as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
-      </Select>
-    </Label>
-    <div class="flex space-x-3">
-      <div class="w-full">
-        <Label for="receiptSequence" class="mb-2 {customColorsClassDark.label}"
-          >No. Comprobante</Label
-        >
-        <ButtonGroup class="w-full">
-          <InputAddon>
-            {#await $receipt}
-              ...
-            {:then response}
-              {response.find((e) => e.id === invoiceHeader.receipt.id)?.serial}
-            {/await}
-          </InputAddon>
-          <Input
-            id="receiptSequence"
-            class={customColorsClassDark.input}
-            value={invoiceHeader.receipt_sequence?.sequence}
-            readonly
-          />
-        </ButtonGroup>
-      </div>
-      <div class="w-full">
-        <Label
-          for="recepitExpiration"
-          class="mb-2 {customColorsClassDark.label}">Fecha de expiración</Label
-        >
-        <Input
-          id="recepitExpiration"
-          type="text"
-          class={customColorsClassDark.input}
-          value={$receipt.find((e) => e.id === invoiceHeader.receipt.id)
-            ?.expiration}
-          readonly
-        />
-      </div>
-    </div>
   </div>
-  <InvoiceDetailsForm
-    bind:invoiceDetails
-    bind:invoiceDetailsToDelete
+  <QuotationDetailsForm
+    bind:quotationDetails={quotationsDetails}
+    bind:quotationDetailsToDelete={quotationsDetailsToDelete}
     bind:totalAmount
-    bind:addInvoiceDetailsAtSelectedItem
-    bind:invoiceHeaderDiscont={invoiceHeader.discount}
-    invoiceActive={invoiceHeader.status}
-    {activeInvoiceDetails}
-    {calculateChange}
+    bind:addQuotationDetailsAtSelectedItem
+    bind:quotationHeaderDiscont={quotationHeader.discount}
+    quotationActive={quotationHeader.status}
+    {activeQuotationDetails}
   />
   <div class="grid grid-cols-4 gap-4">
     <div class="col-start-1 row-span-3">
@@ -492,11 +410,11 @@
         id="textarea-id"
         rows="9"
         name="message"
-        bind:value={invoiceHeader.comment}
-        disabled={!invoiceHeader.status}
+        bind:value={quotationHeader.comment}
+        disabled={!quotationHeader.status}
       />
     </div>
-    <div class="col-start-3">
+    <div class="col-start-4">
       <Label for="price" class="mb-2 {customColorsClassDark.label}"
         >Descuento General</Label
       >
@@ -507,69 +425,53 @@
           step="any"
           class={customColorsClassDark.input}
           type="number"
-          bind:value={invoiceHeader.discount}
+          bind:value={quotationHeader.discount}
           on:blur={appliyGeneralDiscount}
-          required={invoiceHeader.status}
-          disabled={!invoiceHeader.status}
+          required={quotationHeader.status}
+          disabled={!quotationHeader.status}
         />
       </ButtonGroup>
     </div>
-    <Label class="{customColorsClassDark.label} col-start-3"
+    <Label class="{customColorsClassDark.label} col-start-4"
       >Tipo de venta
       <Select
         class="mt-2 {customColorsClassDark.input}"
-        bind:value={invoiceHeader.sales_type}
-        required={invoiceHeader.status}
-        disabled={!invoiceHeader.status}
+        bind:value={quotationHeader.sales_type}
+        required={quotationHeader.status}
+        disabled={!quotationHeader.status}
       >
         {#each $salesTypes as { id, name }}
           <option value={id}>{name}</option>
         {/each}
       </Select>
     </Label>
-    <div class="col-start-3 text-center">
-      <Heading tag="h3" class=" {customColorsClassDark.label}"
-        >Cambio: <Span highlight
-          >{Intl.NumberFormat("es-DO", {
-            style: "currency",
-            currency: "DOP",
-          }).format(change)}</Span
-        ></Heading
-      >
-    </div>
-    <Payment
-      bind:payments
-      bind:totalPayments
-      {calculateChange}
-      {invoiceDetails}
-      {invoiceHeader}
-    />
   </div>
 </form>
 <div class="flex space-x-3 mt-5">
-  <Button color="dark" on:click={() => navigateTo("/invoices_manager")}
+  <Button color="dark" on:click={() => navigateTo("/quotations_manager")}
     >Volver</Button
   >
-  {#if hasPermission("point_of_sales.add_invoiceheader") || hasPermission("point_of_sales.change_invoiceheader")}
+  {#if hasPermission("point_of_sales.add_quotationheader") || hasPermission("point_of_sales.change_quotationheader")}
     <Button
       color="green"
       type="submit"
       form="form_invoice"
-      disabled={!invoiceHeader.status}>Guardar</Button
+      disabled={!quotationHeader.status}>Guardar</Button
     >
   {/if}
-  {#if hasPermission("point_of_sales.delete_invoiceheader")}
+  {#if hasPermission("point_of_sales.delete_quotationheader")}
     <Button
       color="red"
       type="button"
-      on:click={inactivateInvoice}
-      disabled={!invoiceHeader.status || !invoiceHeader.id}>Inactivar</Button
+      on:click={inactivateQuotation}
+      disabled={!quotationHeader.status || !quotationHeader.id}
+      >Inactivar</Button
     >
   {/if}
   <Button
     color="blue"
     type="button"
-    on:click={() => printInvoice(invoiceHeader.id)}
-    disabled={!invoiceHeader.status || !invoiceHeader.id}>Imprimir</Button
+    on:click={() => printQuotation(quotationHeader.id)}
+    disabled={!quotationHeader.status || !quotationHeader.id}>Imprimir</Button
   >
 </div>

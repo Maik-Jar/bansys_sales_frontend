@@ -9,6 +9,8 @@ import ItemsManager from "../../views/items/ItemsManager.svelte";
 import ItemForm from "../../views/items/ItemForm.svelte";
 import InvociesManager from "../../views/invoices/InvociesManager.svelte";
 import InvoiceForm from "../../views/invoices/InvoiceForm.svelte";
+import QuotationsManager from "../../views/quotations/QuotationsManager.svelte";
+import QuotationForm from "../../views/quotations/QuotationForm.svelte";
 
 function isAuthenticated() {
   const isLogin = JSON.parse(localStorage.getItem("isLogin"));
@@ -76,6 +78,18 @@ const protectedRoutes = [
   {
     name: "/invoice_form/:id",
     component: InvoiceForm,
+    layout: MainAdminLayout,
+    onlyIf: { guard: isAuthenticated, redirect: "/login" },
+  },
+  {
+    name: "/quotations_manager",
+    component: QuotationsManager,
+    layout: MainAdminLayout,
+    onlyIf: { guard: isAuthenticated, redirect: "/login" },
+  },
+  {
+    name: "/quotation_form/:id",
+    component: QuotationForm,
     layout: MainAdminLayout,
     onlyIf: { guard: isAuthenticated, redirect: "/login" },
   },

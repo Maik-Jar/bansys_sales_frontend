@@ -14,6 +14,11 @@
     SidebarDropdownWrapper,
     Breadcrumb,
     BreadcrumbItem,
+    Avatar,
+    Dropdown,
+    DropdownHeader,
+    DropdownItem,
+    DropdownDivider,
   } from "flowbite-svelte";
 
   export let currentRoute;
@@ -22,10 +27,18 @@
       ? "/src/assets/bansys-sales-white.svg"
       : "/src/assets/bansys-sales.svg";
 
+  $: userInfo = JSON.parse(localStorage.getItem("token"));
+
   function signout() {
     localStorage.setItem("isLogin", JSON.stringify(false));
     localStorage.setItem("token", "");
     navigateTo("login");
+  }
+
+  function goAdminSite() {
+    if (hasPermission("admin.view_logentry")) {
+      window.open("http://localhost:8000/admin");
+    }
   }
 </script>
 
@@ -34,14 +47,35 @@
     let:hidden
     let:toggle
     class={"bg-white dark:bg-gray-900"}
-    classNavDiv={"mx-0"}
+    classNavDiv={"mx-0 max-w-full "}
   >
     <NavBrand href="/">
-      <img src={colorIcon} class="mr-3 w-[10%]" alt="Flowbite Logo" />
+      <span
+        class="ml-5 self-center whitespace-nowrap text-2xl font-semibold dark:text-white"
+        >Bansys | Sales</span
+      >
     </NavBrand>
-    <NavHamburger on:click={toggle} />
 
-    <DarkMode />
+    <div class="flex items-center space-x-5 mr-5">
+      <DarkMode />
+      <Avatar id="avatar-menu" src="/src/assets/user.svg" />
+      <NavHamburger
+        on:click={toggle}
+        class1="w-full md:flex md:w-auto md:order-1"
+      />
+    </div>
+    <Dropdown placement="bottom" triggeredBy="#avatar-menu">
+      <DropdownHeader>
+        <span class="block text-sm">{userInfo.username}</span>
+        <span class="block truncate text-sm font-medium">name@flowbite.com</span
+        >
+      </DropdownHeader>
+      {#if hasPermission("admin.view_logentry")}
+        <DropdownItem on:click={goAdminSite}>Admin Panel</DropdownItem>
+      {/if}
+      <DropdownDivider />
+      <DropdownItem on:click={signout}>Sign out</DropdownItem>
+    </Dropdown>
   </Navbar>
 
   <div class=" flex h-[87%] w-full">
@@ -87,6 +121,10 @@
               <SidebarDropdownItem
                 label="Gestión de facturas"
                 on:click={() => navigateTo("/invoices_manager")}
+              />
+              <SidebarDropdownItem
+                label="Gestión de cotizaciones"
+                on:click={() => navigateTo("/quotations_manager")}
               />
             </SidebarDropdownWrapper>
           {/if}
@@ -153,23 +191,6 @@
               />
             </SidebarDropdownWrapper>
           {/if}
-          <SidebarItem label="Sign In" on:click={signout}>
-            <svelte:fragment slot="icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke-width="1.5"
-                stroke="currentColor"
-                class="w-6 h-6"
-                ><path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-                /></svg
-              >
-            </svelte:fragment>
-          </SidebarItem>
         </SidebarGroup>
       </SidebarWrapper>
     </Sidebar>

@@ -21,16 +21,16 @@
   export let currentRoute;
 
   let searchTerm = "";
-  let invoicesObjects = {
+  let quotationsObjects = {
     results: [],
   };
   let page = 1;
 
-  function getInvoices(page) {
+  function getQuotations(page) {
     const token = JSON.parse(localStorage.getItem("token"));
     fetch(
       urls.backendRoute +
-        urls.invoicesEndPoint +
+        urls.quotaionsEndPoint +
         `?search=${searchTerm}&page=${page}`,
       {
         method: "get",
@@ -42,7 +42,7 @@
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
-          invoicesObjects = data;
+          quotationsObjects = data;
         } else {
           const data = await res.json();
           console.log(data);
@@ -54,16 +54,16 @@
   }
 
   function nextPage() {
-    if (invoicesObjects.next) {
+    if (quotationsObjects.next) {
       page++;
-      getInvoices(page);
+      getQuotations(page);
     }
   }
 
   function previousPage() {
-    if (invoicesObjects.previous) {
+    if (quotationsObjects.previous) {
       page--;
-      getInvoices(page);
+      getQuotations(page);
     }
   }
 
@@ -84,21 +84,21 @@
     return amountForDiscount;
   }
 
-  function calculateTax(invoiceDetail, invoiceDetailID) {
-    const invoiceDetailObject = invoiceDetail.find(
-      (e) => e.id === invoiceDetailID
+  function calculateTax(quotationDetail, quotationDetailID) {
+    const invoiceDetailObject = quotationDetail.find(
+      (e) => e.id === quotationDetailID
     );
     // prettier-ignore
     return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
   }
 
-  function calculateAmount(invoiceDetail, invoiceDetailID) {
-    const invoiceDetailObject = invoiceDetail.find(
-      (e) => e.id === invoiceDetailID
+  function calculateAmount(quotationDetail, quotationDetailID) {
+    const invoiceDetailObject = quotationDetail.find(
+      (e) => e.id === quotationDetailID
     );
 
     return (
-      calculateTax(invoiceDetail, invoiceDetailID) +
+      calculateTax(quotationDetail, quotationDetailID) +
       (invoiceDetailObject.price * invoiceDetailObject.quantity -
         calculateDiscount(
           invoiceDetailObject.price,
@@ -108,16 +108,16 @@
     );
   }
 
-  function calculateTotalAmount(invoiceDetails) {
+  function calculateTotalAmount(quotationDetails) {
     let sumAmounts = 0;
-    invoiceDetails.map((e) => {
-      sumAmounts += calculateAmount(invoiceDetails, e.id);
+    quotationDetails.map((e) => {
+      sumAmounts += calculateAmount(quotationDetails, e.id);
     });
     return sumAmounts;
   }
 
   onMount(() => {
-    getInvoices(1);
+    getQuotations(1);
   });
 </script>
 
@@ -135,7 +135,7 @@
       class="!p-2.5"
       on:click={() => {
         page = 1;
-        getInvoices(1);
+        getQuotations(1);
       }}
     >
       <svg
@@ -153,12 +153,12 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_invoiceheader")}
+  {#if hasPermission("point_of_sales.add_quotationheader")}
     <Button
       size="sm"
       color="blue"
       pill
-      on:click={() => navigateTo("/invoice_form")}>Nueva factura</Button
+      on:click={() => navigateTo("/quotation_form")}>Nueva Cotización</Button
     >
   {/if}
 </div>
@@ -166,32 +166,24 @@
   <Table shadow hoverable={true}>
     <TableHead>
       <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Fact. No.</TableHeadCell>
+      <TableHeadCell scope="col" class={"text-center"}>Cot. No.</TableHeadCell>
       <TableHeadCell scope="col" class={"text-center"}>Cliente</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}
-        >Comprobante</TableHeadCell
-      >
       <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
       <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
       <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
       <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
     </TableHead>
     <TableBody tableBodyClass={"divide-y min-h-full"}>
-      {#each invoicesObjects.results as invoice, i}
+      {#each quotationsObjects.results as quotation, i}
         <TableBodyRow class="h-5">
           <TableBodyCell class={"w-[3%] p-2 text-center"}
             >{(i += 1)}</TableBodyCell
           >
-          <TableBodyCell class="w-[10%] p-2">{invoice.number}</TableBodyCell>
+          <TableBodyCell class="w-[10%] p-2">{quotation.number}</TableBodyCell>
 
           <TableBodyCell class={"w-[20%] p-2 text-center"}
-            >{invoice.customer.name}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}
-            >{invoice?.receipt_sequence
-              ? $receipt.find(
-                  (e) => e.id === invoice?.receipt_sequence?.receipt
-                )?.name
+            >{quotation.customer?.name
+              ? quotation.customer?.name
               : "N/A"}</TableBodyCell
           >
           <TableBodyCell class={"w-[12%] p-2 text-center"}
@@ -199,23 +191,23 @@
               style: "currency",
               currency: "DOP",
             }).format(
-              calculateTotalAmount(invoice.invoice_detail)
+              calculateTotalAmount(quotation.quotation_detail)
             )}</TableBodyCell
           >
           <TableBodyCell class={"w-[12%] p-2 text-center"}
-            >{new Date(invoice.date_created).toLocaleString(
+            >{new Date(quotation.date_created).toLocaleString(
               "es-DO"
             )}</TableBodyCell
           >
           <TableBodyCell class={"w-[10%] p-2 text-center"}
-            ><Badge rounded color={invoice.status ? "green" : "red"}
-              >{invoice.status ? "Activo" : "Inactivo"}</Badge
+            ><Badge rounded color={quotation.status ? "green" : "red"}
+              >{quotation.status ? "Activo" : "Inactivo"}</Badge
             ></TableBodyCell
           >
           <TableBodyCell class={"w-[10%] p-2 text-center"}>
             <A
               class="!text-amber-500 hover:!text-amber-600"
-              on:click={() => navigateTo("/invoice_form/" + invoice.id)}
+              on:click={() => navigateTo("/quotation_form/" + quotation.id)}
               >Editar</A
             >
           </TableBodyCell>

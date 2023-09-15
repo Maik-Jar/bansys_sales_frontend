@@ -8,13 +8,15 @@ const pointSales = {
   providersEndPoint: "point_of_sales/api/providers",
   itemsEndPoint: "point_of_sales/api/items",
   invoicesEndPoint: "point_of_sales/api/invoices",
+  quotaionsEndPoint: "point_of_sales/api/quotations",
   documentsTypesEndPoint: "point_of_sales/api/documents_types",
   taxes: "point_of_sales/api/taxes",
   receipt: "point_of_sales/api/receipts",
   itemsList: "point_of_sales/api/items_list",
   salesTypesEndpoint: "point_of_sales/api/sales_types",
   paymentsMethodsEndpoint: "point_of_sales/api/payments_methods",
-  printInvoiceEndpoint: "point_of_sales/api/invoices/print_invoice",
+  printInvoiceEndpoint: "point_of_sales/api/print/print_invoice",
+  printQuotationEndpoint: "point_of_sales/api/print/print_quotation",
 };
 
 export const urls = {
