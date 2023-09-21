@@ -38,8 +38,9 @@
   on:submit|preventDefault|stopPropagation={login}
   class="h-screen w-screen flex flex-col items-center justify-center"
 >
-  <div class="mb-10">
-    <Heading tag="h1">Login</Heading>
+  <div class="mb-10 flex flex-col justify-items-center">
+    <img src="/bansys-sales-logo.svg" alt="" width="900" height="350" />
+    <Heading tag="h1" class="text-center mt-5 text-zinc-800">Login</Heading>
   </div>
   <div class="flex flex-col justify-center mb-6 w-2/6">
     <div class="mb-6">

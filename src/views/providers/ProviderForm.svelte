@@ -74,7 +74,7 @@
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
-            Authorization: `Token ${token}`,
+            Authorization: `Token ${token.token}`,
           },
           body: JSON.stringify(providerToSave),
         })
@@ -121,7 +121,7 @@
             headers: {
               Accept: "application/json",
               "Content-Type": "application/json",
-              Authorization: `Token ${token}`,
+              Authorization: `Token ${token.token}`,
             },
             body: JSON.stringify(providerToSave),
           }

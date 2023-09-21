@@ -58,7 +58,7 @@
 
     <div class="flex items-center space-x-5 mr-5">
       <DarkMode />
-      <Avatar id="avatar-menu" src="/src/assets/user.svg" />
+      <Avatar id="avatar-menu" src="/user.svg" />
       <NavHamburger
         on:click={toggle}
         class1="w-full md:flex md:w-auto md:order-1"
@@ -78,7 +78,7 @@
     </Dropdown>
   </Navbar>
 
-  <div class=" flex h-[87%] w-full">
+  <div class=" flex h-[92%] w-full">
     <Sidebar class={"h-full w-72"}>
       <SidebarWrapper class={"h-full bg-white dark:bg-gray-900"}>
         <SidebarGroup>

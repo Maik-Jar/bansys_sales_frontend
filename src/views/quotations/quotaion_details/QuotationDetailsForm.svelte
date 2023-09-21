@@ -15,6 +15,7 @@
     ButtonGroup,
     InputAddon,
     Modal,
+    Spinner,
   } from "flowbite-svelte";
 
   export let quotationDetails = [];
@@ -445,16 +446,20 @@
 
 <Modal title="Busqueda avanzada de items" bind:open={defaultModal} autoclose>
   <div class="h-[25rem]">
-    <MultiSelect
-      outerDivClass=" h-20"
-      liOptionClass="dark:text-black"
-      ulSelectedClass=" h-20"
-      bind:selected={selectedItems}
-      options={multiselectOptions}
-      on:add={() => addRow(selectedItems)}
-      on:remove={(e) => deleteRow(e?.detail.option)}
-      on:removeAll={(e) => deleteRow(undefined, true)}
-    />
+    {#await multiselectOptions}
+      <Spinner />
+    {:then response}
+      <MultiSelect
+        outerDivClass=" h-20"
+        liOptionClass="dark:text-black"
+        ulSelectedClass=" h-20"
+        bind:selected={selectedItems}
+        options={multiselectOptions}
+        on:add={() => addRow(selectedItems)}
+        on:remove={(e) => deleteRow(e?.detail.option)}
+        on:removeAll={(e) => deleteRow(undefined, true)}
+      />
+    {/await}
   </div>
   <svelte:fragment slot="footer">
     <Button color="red">Cerrar</Button>

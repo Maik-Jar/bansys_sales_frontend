@@ -29,10 +29,10 @@
     brand: null,
     reference: null,
     price: 0.0,
-    tax: null,
+    tax: 1,
     stock: 0,
     is_service: false,
-    provider: null,
+    provider: 1,
     status: true,
   });
 
