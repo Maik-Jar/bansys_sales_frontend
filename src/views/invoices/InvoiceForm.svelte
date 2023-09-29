@@ -370,7 +370,9 @@
     class="flex justify-between items-center pb-5 mb-2 border-b-4 border-gray-100 dark:border-gray-400"
   >
     <Heading tag="h4" class="w-1/2 {customColorsClassDark.label} self-end"
-      >No. Factura: <Span highlight>{invoiceHeader.number}</Span></Heading
+      >No. Factura: <Span highlight
+        >{invoiceHeader.number ? invoiceHeader.number : ""}</Span
+      ></Heading
     >
 
     <div class="flex space-x-3">

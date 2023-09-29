@@ -148,6 +148,7 @@
             ><Input
               size="sm"
               type="number"
+              step="0.01"
               class={customColorsClassDark.input}
               value={payment.amount}
               on:blur={(e) => updateRowPaymentAmount(payment.id, e.target)}

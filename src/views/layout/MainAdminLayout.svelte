@@ -78,7 +78,7 @@
     </Dropdown>
   </Navbar>
 
-  <div class=" flex h-[92%] w-full">
+  <div class=" flex h-[89%] 2xl:h-[92%] w-full">
     <Sidebar class={"h-full w-72"}>
       <SidebarWrapper class={"h-full bg-white dark:bg-gray-900"}>
         <SidebarGroup>
