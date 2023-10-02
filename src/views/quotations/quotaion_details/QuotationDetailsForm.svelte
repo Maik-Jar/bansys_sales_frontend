@@ -2,6 +2,7 @@
   import { isNumeric } from "../../../lib/utils/functions";
   import { taxes, items } from "../../../lib/stores/stores";
   import Swal from "sweetalert2";
+  import { urls } from "../../../lib/utils/urls";
   import MultiSelect from "svelte-multiselect";
   import {
     Table,
@@ -17,6 +18,7 @@
     Modal,
     Spinner,
   } from "flowbite-svelte";
+  import { onMount } from "svelte";
 
   export let quotationDetails = [];
   export let quotationActive = true;
@@ -42,24 +44,32 @@
     });
   };
 
-  let multiselectOptions = $items.map((e) => {
-    return {
-      label: e.name + " / " + e.price,
-      value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
-    };
-  });
+  let multiselectOptions;
+  //   let multiselectOptions = $items.map((e) => {
+  //     return {
+  //       label: e.name + " / " + e.price,
+  //       value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
+  //     };
+  //   });
   let selectedItems = [];
   let itemID;
   let counter = 0;
   let defaultModal = false;
+  let quantityModal = false;
+  let discountModal = false;
   let totalQuantity = 0;
   let totalTax = 0;
-  let totalDiscount = 0.0;
+  let totalDiscount = 0;
+  let rowDetail;
+  let tempQuantity;
+  let tempDiscount;
 
   const customColorsClassDark = {
     label: "dark:text-gray-500",
     input: "dark:bg-gray-50 dark:text-black",
   };
+
+  $: console.log(quotationDetailsToDelete);
 
   $: if (quotationDetails) {
     calculateTotalTax();
@@ -68,9 +78,36 @@
     calulateTotalDiscount();
   }
 
+  function getItems(page) {
+    const token = JSON.parse(localStorage.getItem("token"));
+    fetch(urls.backendRoute + urls.itemsList, {
+      method: "get",
+      headers: {
+        Authorization: `Token ${token.token}`,
+      },
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          multiselectOptions = data.map((e) => {
+            return {
+              label: e.name + " / " + e.price,
+              value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
+            };
+          });
+        } else {
+          const data = await res.json();
+          console.log(data);
+        }
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+  }
+
   function calculateDiscount(price, quantity, discount) {
     let amountForDiscount = 0;
-    if (discount < 0) {
+    if (discount < 0 || discount == 0) {
       return amountForDiscount;
     }
     // prettier-ignore
@@ -138,6 +175,7 @@
     quotationDetails.map((e) => {
       sumDiscounts += calculateDiscount(e.price, e.quantity, e.discount);
     });
+
     totalDiscount = sumDiscounts;
   }
 
@@ -218,19 +256,19 @@
   function updateQuantity(rowId, value) {
     quotationDetails = quotationDetails.map((e, index) => {
       if (e.id === rowId) {
-        e.quantity = Number(value.value);
+        e.quantity = value ? Number(value) : 1;
       }
       return e;
     });
   }
 
   function updateDiscount(rowId, value) {
-    if (!value.value) {
+    if (!value) {
       return;
     }
     quotationDetails = quotationDetails.map((e) => {
       if (e.id === rowId) {
-        e.discount = Number.parseFloat(value.value);
+        e.discount = Number.parseFloat(value);
       }
       return e;
     });
@@ -240,6 +278,7 @@
   function deleteRow(rowId, all = false) {
     if (all) {
       quotationHeaderDiscont = 0;
+
       quotationDetails.filter((e) => {
         if (isNumeric(e.id)) {
           quotationDetailsToDelete = [...quotationDetailsToDelete, e];
@@ -248,15 +287,14 @@
 
       quotationDetails = [];
     }
-
+    console.log(typeof rowId);
     if (typeof rowId === "object") {
       quotationDetails = quotationDetails.filter((e) => {
-        if (isNumeric(e.id)) {
-          quotationDetailsToDelete = [...quotationDetailsToDelete, e];
-        }
-
         if (e?.item.id !== rowId?.value.id) {
           return e;
+        }
+        if (isNumeric(e.id)) {
+          quotationDetailsToDelete = [...quotationDetailsToDelete, e];
         }
       });
     } else {
@@ -285,6 +323,20 @@
         })
     }
   }
+
+  function openQuantityModal(rowId) {
+    rowDetail = quotationDetails.find((e) => e.id === rowId);
+    quantityModal = true;
+  }
+
+  function openDiscountModal(rowId) {
+    rowDetail = quotationDetails.find((e) => e.id === rowId);
+    discountModal = true;
+  }
+
+  onMount(() => {
+    getItems();
+  });
 </script>
 
 <form
@@ -315,134 +367,147 @@
     disabled={!activeQuotationDetails || !quotationActive}>Agregar</Button
   >
 </form>
-<div
+<!-- <div
   class="h-[25rem] relative overflow-y-auto shadow-xl bg-white rounded-xl border-2 border-gray-300 mb-5"
+> -->
+<Table
+  hoverable={true}
+  shadow
+  divClass={"relative h-[25rem] overflow-y-auto mb-5"}
 >
-  <Table hoverable={true} shadow>
-    <TableHead>
-      <TableHeadCell scope="col" class="text-center w-[3%]">#</TableHeadCell>
-      <TableHeadCell scope="col" class="text-center w-[25%]">Item</TableHeadCell
-      >
-      <TableHeadCell scope="col" class="text-center w-[10%]"
-        >Precio Und.</TableHeadCell
-      >
-      <TableHeadCell scope="col" class="text-center w-[11%]"
-        >Cant.</TableHeadCell
-      >
-      <TableHeadCell scope="col" class="text-center w-[10%]">Imp.</TableHeadCell
-      >
-      <TableHeadCell scope="col" class="text-center w-[15%]"
-        >Descto.</TableHeadCell
-      >
-      <TableHeadCell scope="col" class="text-center w-[10%]"
-        >Monto</TableHeadCell
-      >
-      <TableHeadCell scope="col" class="text-center w-[3%]"
-        >Acción</TableHeadCell
-      >
-    </TableHead>
-    <TableBody tableBodyClass="divide-y">
-      {#each quotationDetails as invoiceDetail, i}
-        <TableBodyRow class="h-5">
-          <TableBodyCell class="text-center w-[3%] py-1">{i + 1}</TableBodyCell>
-          <TableBodyCell class=" w-[25%] py-1"
-            >{invoiceDetail.item.name}</TableBodyCell
+  <TableHead class={"sticky top-0 w-full"}>
+    <TableHeadCell padding={"px-3 py-3"} class="text-center">#</TableHeadCell>
+    <TableHeadCell padding={"px-3 py-3"} class="text-center">Item</TableHeadCell
+    >
+    <TableHeadCell padding={"px-3 py-3"} class="text-center"
+      >Precio Und.</TableHeadCell
+    >
+    <TableHeadCell padding={"px-3 py-3"} class="text-center"
+      >Cant.</TableHeadCell
+    >
+    <TableHeadCell padding={"px-3 py-3"} class="text-center">Imp.</TableHeadCell
+    >
+    <TableHeadCell padding={"px-3 py-3"} class="text-center"
+      >Descto.</TableHeadCell
+    >
+    <TableHeadCell padding={"px-3 py-3"} class="text-center"
+      >Monto</TableHeadCell
+    >
+    <TableHeadCell padding={"px-3 py-3"} class="text-center"
+      >Acción</TableHeadCell
+    >
+  </TableHead>
+  <TableBody tableBodyClass="divide-y">
+    {#each quotationDetails as invoiceDetail, i}
+      <TableBodyRow>
+        <TableBodyCell class="text-center py-1 px-3">{i + 1}</TableBodyCell>
+        <TableBodyCell class=" py-1 px-3"
+          >{invoiceDetail.item.name}</TableBodyCell
+        >
+        <TableBodyCell class="text-center py-1 px-3"
+          >{new Intl.NumberFormat("es-DO").format(
+            invoiceDetail.price
+          )}</TableBodyCell
+        >
+        <TableBodyCell
+          class="text-center py-1 px-3 cursor-pointer"
+          on:click={() => openQuantityModal(invoiceDetail.id)}
+        >
+          {invoiceDetail.quantity}
+          <!-- <Input
+            size="sm"
+            type="number"
+            class="m-0 {customColorsClassDark.input}"
+            value={invoiceDetail.quantity}
+            on:input={(e) => updateQuantity(invoiceDetail.id, e.target)}
+            required
+            disabled={!quotationActive}
+          /> -->
+        </TableBodyCell>
+        <TableBodyCell class="text-center py-1 px-3">
+          {new Intl.NumberFormat("es-DO").format(
+            calculateTax(invoiceDetail.id)
+          )}</TableBodyCell
+        >
+        <TableBodyCell
+          class="text-center py-1 px-3 cursor-pointer"
+          on:click={() => openDiscountModal(invoiceDetail.id)}
+        >
+          {new Intl.NumberFormat("es-DO").format(invoiceDetail.discount)}
+          <!-- <Input
+            size="sm"
+            type="number"
+            step="any"
+            class="m-0 {customColorsClassDark.input}"
+            value={invoiceDetail.discount}
+            on:blur={(e) => updateDiscount(invoiceDetail.id, e.target)}
+            required
+            disabled={!quotationActive}
+          /> -->
+        </TableBodyCell>
+        <TableBodyCell class="text-center py-1 px-3">
+          {new Intl.NumberFormat("es-DO").format(
+            calculateAmount(invoiceDetail.id)
+          )}
+        </TableBodyCell>
+        <TableBodyCell class="text-center py-1 px-3">
+          <Button
+            class="m-0"
+            size="xs"
+            color="red"
+            on:click={() => deleteRow(invoiceDetail.id)}
+            disabled={!quotationActive}
           >
-          <TableBodyCell class="text-center w-[10%] py-1"
-            >{new Intl.NumberFormat("es-DO").format(
-              invoiceDetail.price
-            )}</TableBodyCell
-          >
-          <TableBodyCell class="text-center w-[11%] py-1"
-            ><Input
-              size="sm"
-              type="number"
-              class="m-0 {customColorsClassDark.input}"
-              value={invoiceDetail.quantity}
-              on:input={(e) => updateQuantity(invoiceDetail.id, e.target)}
-              required
-              disabled={!quotationActive}
-            /></TableBodyCell
-          >
-          <TableBodyCell class="text-center w-[10%] py-1">
-            {new Intl.NumberFormat("es-DO").format(
-              calculateTax(invoiceDetail.id)
-            )}</TableBodyCell
-          >
-          <TableBodyCell class="text-center w-[15%] py-1"
-            ><Input
-              size="sm"
-              type="number"
-              step="any"
-              class="m-0 {customColorsClassDark.input}"
-              value={invoiceDetail.discount}
-              on:blur={(e) => updateDiscount(invoiceDetail.id, e.target)}
-              required
-              disabled={!quotationActive}
-            /></TableBodyCell
-          >
-          <TableBodyCell class="text-center w-[10%] py-1">
-            {new Intl.NumberFormat("es-DO").format(
-              calculateAmount(invoiceDetail.id)
-            )}
-          </TableBodyCell>
-          <TableBodyCell class="text-center w-[3%] py-1">
-            <Button
-              class="m-0"
-              size="xs"
-              color="red"
-              on:click={() => deleteRow(invoiceDetail.id)}
-              disabled={!quotationActive}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="1.2em"
+              height="1.2em"
+              viewBox="0 0 16 16"
+              {...$$props}
+              ><path
+                fill="currentColor"
+                d="M2 5v10c0 .55.45 1 1 1h9c.55 0 1-.45 1-1V5H2zm3 9H4V7h1v7zm2 0H6V7h1v7zm2 0H8V7h1v7zm2 0h-1V7h1v7zm2.25-12H10V.75A.753.753 0 0 0 9.25 0h-3.5A.753.753 0 0 0 5 .75V2H1.75a.752.752 0 0 0-.75.75V4h13V2.75a.752.752 0 0 0-.75-.75zM9 2H6v-.987h3V2z"
+              /></svg
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="1.2em"
-                height="1.2em"
-                viewBox="0 0 16 16"
-                {...$$props}
-                ><path
-                  fill="currentColor"
-                  d="M2 5v10c0 .55.45 1 1 1h9c.55 0 1-.45 1-1V5H2zm3 9H4V7h1v7zm2 0H6V7h1v7zm2 0H8V7h1v7zm2 0h-1V7h1v7zm2.25-12H10V.75A.753.753 0 0 0 9.25 0h-3.5A.753.753 0 0 0 5 .75V2H1.75a.752.752 0 0 0-.75.75V4h13V2.75a.752.752 0 0 0-.75-.75zM9 2H6v-.987h3V2z"
-                /></svg
-              >
-            </Button>
-          </TableBodyCell>
-        </TableBodyRow>
-      {:else}
-        <TableBodyRow>
-          <TableBodyCell colspan="8" class="text-center"
-            >No hay items</TableBodyCell
-          >
-        </TableBodyRow>
-      {/each}
-    </TableBody>
-  </Table>
-  <tfoot class="rounded-b-xl absolute inset-x-0 bottom-0">
+          </Button>
+        </TableBodyCell>
+      </TableBodyRow>
+    {:else}
+      <TableBodyRow>
+        <TableBodyCell colspan="8" class="text-center "
+          >No hay items</TableBodyCell
+        >
+      </TableBodyRow>
+    {/each}
+  </TableBody>
+  <tfoot class="sticky bottom-0">
     <tr class="font-semibold text-gray-900 dark:text-white dark:bg-gray-700">
-      <th scope="row" class="py-3 px-6 text-left w-[38%]">Total</th>
-      <td class="py-3 px-6 w-[11%] text-center">{totalQuantity}</td>
-      <td class="py-3 px-6 w-[10%] text-center"
+      <th colspan="2" scope="row" class="py-3 px-6 text-left">Total</th>
+      <th />
+      <td class="py-3 px-6 text-center">{totalQuantity}</td>
+      <td class="py-3 px-6 text-center"
         >{new Intl.NumberFormat("es-DO", {
           style: "currency",
           currency: "DOP",
         }).format(totalTax)}</td
       >
-      <td class="py-1 px-6 w-[15%] text-center flex-1">
+      <td class="py-1 px-6 text-center flex-1">
         {new Intl.NumberFormat("es-DO", {
           style: "currency",
           currency: "DOP",
         }).format(totalDiscount)}
       </td>
-      <td class="py-3 px-6 w-[13%] text-center"
+      <td class="py-3 px-6 text-center"
         >{new Intl.NumberFormat("es-DO", {
           style: "currency",
           currency: "DOP",
         }).format(totalAmount)}</td
       >
-      <td class="py-3 px-6 w-[3%]" />
+      <td class="py-3 px-6" />
     </tr>
   </tfoot>
-</div>
+</Table>
+<!-- </div> -->
 
 <Modal title="Busqueda avanzada de items" bind:open={defaultModal} autoclose>
   <div class="h-[25rem]">
@@ -463,5 +528,66 @@
   </div>
   <svelte:fragment slot="footer">
     <Button color="red">Cerrar</Button>
+  </svelte:fragment>
+</Modal>
+
+<Modal
+  title="Cantidad del item: {rowDetail?.item.name}"
+  bind:open={quantityModal}
+  size="sm"
+>
+  <form
+    id="form_quantity"
+    on:submit|preventDefault|stopPropagation={() =>
+      updateQuantity(rowDetail.id, tempQuantity?.value)}
+  >
+    <Input
+      type="number"
+      class="m-0 {customColorsClassDark.input}"
+      value={rowDetail.quantity}
+      on:input={(e) => (tempQuantity = e.target)}
+      required
+      disabled={!quotationActive}
+    />
+  </form>
+  <svelte:fragment slot="footer">
+    <Button
+      type="submit"
+      form="form_quantity"
+      color="green"
+      on:click={() => (quantityModal = false)}>Aplicar</Button
+    >
+    <Button color="red" on:click={() => (quantityModal = false)}>Cerrar</Button>
+  </svelte:fragment>
+</Modal>
+
+<Modal
+  title="Descuento al item: {rowDetail?.item.name}"
+  bind:open={discountModal}
+  size="sm"
+>
+  <form
+    id="form_discount"
+    on:submit|preventDefault|stopPropagation={() =>
+      updateDiscount(rowDetail.id, tempDiscount?.value)}
+  >
+    <Input
+      type="number"
+      step="0.01"
+      class="m-0 {customColorsClassDark.input}"
+      value={rowDetail.discount}
+      on:input={(e) => (tempDiscount = e.target)}
+      required
+      disabled={!quotationActive}
+    />
+  </form>
+  <svelte:fragment slot="footer">
+    <Button
+      type="submit"
+      form="form_discount"
+      color="green"
+      on:click={() => (discountModal = false)}>Aplicar</Button
+    >
+    <Button color="red" on:click={() => (discountModal = false)}>Cerrar</Button>
   </svelte:fragment>
 </Modal>

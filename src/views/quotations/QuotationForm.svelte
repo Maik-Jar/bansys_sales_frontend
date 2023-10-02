@@ -140,6 +140,7 @@
                 data.date_updated
               ).toLocaleString("es-DO");
               quotationHeader.user_created = data.user_created;
+              quotationsDetails = data?.quotation_detail;
 
               Swal.fire("¡Nueva cotización creada!", "", "success");
               isEditable = true;
@@ -193,6 +194,8 @@
             if (res.ok) {
               const data = await res.json();
               quotationHeader.date_updated = data.date_updated;
+              console.log(data?.quotation_detail);
+              quotationsDetails = data?.quotation_detail;
               Swal.fire("¡Datos guardados!", "", "success");
             } else {
               const message = await res.json();
@@ -401,7 +404,7 @@
     {activeQuotationDetails}
   />
   <div class="grid grid-cols-4 gap-4">
-    <div class="col-start-1 row-span-3">
+    <div class="col-start-1 col-span-2 2xl:col-span-1 row-span-3">
       <Label for="textarea-id" class="mb-2 {customColorsClassDark.label}"
         >Comentarios</Label
       >
