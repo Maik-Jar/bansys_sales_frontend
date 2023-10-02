@@ -2,7 +2,6 @@
   import { urls } from "../../lib/utils/urls";
   import { navigateTo } from "svelte-router-spa";
   import { onMount } from "svelte";
-  import { receipt } from "../../lib/stores/stores";
   import { hasPermission } from "../../lib/utils/functions";
   import {
     Button,
@@ -162,66 +161,68 @@
     >
   {/if}
 </div>
-<div class="h-[35rem]">
-  <Table shadow hoverable={true}>
-    <TableHead>
-      <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Cot. No.</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Cliente</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
-    </TableHead>
-    <TableBody tableBodyClass={"divide-y min-h-full"}>
-      {#each quotationsObjects.results as quotation, i}
-        <TableBodyRow class="h-5">
-          <TableBodyCell class={"w-[3%] p-2 text-center"}
-            >{(i += 1)}</TableBodyCell
-          >
-          <TableBodyCell class="w-[10%] p-2">{quotation.number}</TableBodyCell>
+<Table
+  shadow
+  hoverable={true}
+  divClass={"relative h-[25rem] overflow-y-auto mb-5"}
+>
+  <TableHead class={"sticky top-0 w-full"}>
+    <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Cot. No.</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Cliente</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
+  </TableHead>
+  <TableBody tableBodyClass={"divide-y min-h-full"}>
+    {#each quotationsObjects.results as quotation, i}
+      <TableBodyRow class="h-5">
+        <TableBodyCell class={"w-[3%] p-2 text-center"}
+          >{(i += 1)}</TableBodyCell
+        >
+        <TableBodyCell class="w-[10%] p-2">{quotation.number}</TableBodyCell>
 
-          <TableBodyCell class={"w-[20%] p-2 text-center"}
-            >{quotation.customer?.name
-              ? quotation.customer?.name
-              : "N/A"}</TableBodyCell
+        <TableBodyCell class={"w-[20%] p-2 text-center"}
+          >{quotation.customer?.name
+            ? quotation.customer?.name
+            : "N/A"}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[12%] p-2 text-center"}
+          >{new Intl.NumberFormat("es-DO", {
+            style: "currency",
+            currency: "DOP",
+          }).format(
+            calculateTotalAmount(quotation.quotation_detail)
+          )}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[12%] p-2 text-center"}
+          >{new Date(quotation.date_created).toLocaleString(
+            "es-DO"
+          )}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}
+          ><Badge rounded color={quotation.status ? "green" : "red"}
+            >{quotation.status ? "Activo" : "Inactivo"}</Badge
+          ></TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}>
+          <A
+            class="!text-amber-500 hover:!text-amber-600"
+            on:click={() => navigateTo("/quotation_form/" + quotation.id)}
+            >Editar</A
           >
-          <TableBodyCell class={"w-[12%] p-2 text-center"}
-            >{new Intl.NumberFormat("es-DO", {
-              style: "currency",
-              currency: "DOP",
-            }).format(
-              calculateTotalAmount(quotation.quotation_detail)
-            )}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[12%] p-2 text-center"}
-            >{new Date(quotation.date_created).toLocaleString(
-              "es-DO"
-            )}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}
-            ><Badge rounded color={quotation.status ? "green" : "red"}
-              >{quotation.status ? "Activo" : "Inactivo"}</Badge
-            ></TableBodyCell
-          >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}>
-            <A
-              class="!text-amber-500 hover:!text-amber-600"
-              on:click={() => navigateTo("/quotation_form/" + quotation.id)}
-              >Editar</A
-            >
-          </TableBodyCell>
-        </TableBodyRow>
-      {:else}
-        <TableBodyRow>
-          <TableBodyCell colspan="8" class={" text-center"}
-            >NO HAY DATOS</TableBodyCell
-          >
-        </TableBodyRow>
-      {/each}
-    </TableBody>
-  </Table>
-</div>
+        </TableBodyCell>
+      </TableBodyRow>
+    {:else}
+      <TableBodyRow>
+        <TableBodyCell colspan="8" class={" text-center"}
+          >NO HAY DATOS</TableBodyCell
+        >
+      </TableBodyRow>
+    {/each}
+  </TableBody>
+</Table>
 <div class="flex mt-4 space-x-3 justify-end">
   <PaginationItem on:click={previousPage}>Previous</PaginationItem>
   <PaginationItem on:click={nextPage}>Next</PaginationItem>
