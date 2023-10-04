@@ -13,6 +13,7 @@
     Select,
     CloseButton,
     Button,
+    Modal,
   } from "flowbite-svelte";
 
   export let payments = [];
@@ -28,6 +29,9 @@
 
   let counter = 0;
   let activePayments;
+  let open = false;
+  let tempAmount;
+  let paymentRow;
 
   $: if (payments) {
     calculateTotalPayments();
@@ -71,7 +75,7 @@
     if (activePayments) {
       payments = payments.map((e) => {
         if (e.id === paymentId) {
-          e.amount = Number.parseFloat(value.value);
+          e.amount = Number.parseFloat(value);
         }
         return e;
       });
@@ -112,17 +116,22 @@
 
     totalPayments = sumPayments;
   }
+
+  function openModal(paymentRowId) {
+    paymentRow = payments.find((e) => e.id === paymentRowId);
+    open = true;
+  }
 </script>
 
-<div
-  class="relative overflow-y-auto shadow-xl bg-white rounded-xl border-2 border-gray-300 col-start-4 row-span-3 row-start-1"
->
-  <Table hoverable={true} shadow>
-    <TableHead>
-      <TableHeadCell colspan="2" class="text-center w-[90%]"
-        >Pagos</TableHeadCell
-      >
-      <TableHeadCell class="p-1 text-center w-[2%]"
+<div class="col-start-4 row-span-3 row-start-1">
+  <Table
+    hoverable={true}
+    shadow
+    divClass={"relative overflow-y-auto h-full bg-white"}
+  >
+    <TableHead class={"sticky top-0 w-full"}>
+      <TableHeadCell colspan="2" class="px-3 text-center">Pagos</TableHeadCell>
+      <TableHeadCell class="text-right px-3"
         ><Button
           color="blue"
           size="sm"
@@ -144,19 +153,26 @@
     <TableBody tableBodyClass="divide-y">
       {#each payments as payment}
         <TableBodyRow class="h-5">
-          <TableBodyCell class="px-2 py-1 w-[48%] text-center"
-            ><Input
-              size="sm"
-              type="number"
-              step="0.01"
-              class={customColorsClassDark.input}
-              value={payment.amount}
-              on:blur={(e) => updateRowPaymentAmount(payment.id, e.target)}
-              required={activePayments}
-              disabled={!activePayments}
-            /></TableBodyCell
+          <TableBodyCell
+            class="px-3 py-1 text-center cursor-pointer"
+            on:click={() => openModal(payment.id)}
           >
-          <TableBodyCell class="p-1  w-[50%] text-right">
+            {new Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(payment.amount)}
+            <!-- <Input
+            size="sm"
+            type="number"
+            step="0.01"
+            class={customColorsClassDark.input}
+            value={payment.amount}
+            on:blur={(e) => updateRowPaymentAmount(payment.id, e.target)}
+            required={activePayments}
+            disabled={!activePayments}
+          /> -->
+          </TableBodyCell>
+          <TableBodyCell class="px-3 py-1 text-center">
             <Select
               underline
               size="sm"
@@ -171,7 +187,7 @@
               {/each}
             </Select>
           </TableBodyCell>
-          <TableBodyCell class="p-1 w-[2%] text-center"
+          <TableBodyCell class="px-3 py-1 text-right"
             ><CloseButton
               on:click={() => deleteRowPayment(payment.id)}
               disabled={!activePayments}
@@ -180,18 +196,54 @@
         </TableBodyRow>
       {/each}
     </TableBody>
+    <tfoot class="absolute inset-x-0 bottom-0">
+      <tr class="font-semibold text-gray-900 dark:text-white dark:bg-gray-700">
+        <th scope="row" class="py-3 px-6 text-left w-[50%]">Total</th>
+        <td class="py-3 px-6 w-[50%] text-center"
+          >{new Intl.NumberFormat("es-DO", {
+            style: "currency",
+            currency: "DOP",
+          }).format(totalPayments)}</td
+        >
+        <td />
+      </tr>
+    </tfoot>
   </Table>
-
-  <tfoot class="rounded-b-xl absolute inset-x-0 bottom-0">
-    <tr class="font-semibold text-gray-900 dark:text-white dark:bg-gray-700">
-      <th scope="row" class="py-3 px-6 text-left w-[50%]">Total</th>
-      <td class="py-3 px-6 w-[50%] text-center"
-        >{new Intl.NumberFormat("es-DO", {
-          style: "currency",
-          currency: "DOP",
-        }).format(totalPayments)}</td
-      >
-      <td />
-    </tr>
-  </tfoot>
 </div>
+
+<Modal title="Monto pagado" bind:open size="sm">
+  <form
+    id="form_amount"
+    on:submit|preventDefault|stopPropagation={() =>
+      updateRowPaymentAmount(paymentRow.id, tempAmount?.value)}
+  >
+    <Input
+      size="sm"
+      type="number"
+      step="0.01"
+      class={customColorsClassDark.input}
+      value={paymentRow.amount}
+      on:blur={(e) => (tempAmount = e.target)}
+      required={activePayments}
+      disabled={!activePayments}
+    />
+    <!-- <Input
+      type="number"
+      step="0.01"
+      class="m-0 {customColorsClassDark.input}"
+      value={rowDetail.discount}
+      on:input={(e) => (tempDiscount = e.target)}
+      required
+      disabled={!quotationActive}
+    /> -->
+  </form>
+  <svelte:fragment slot="footer">
+    <Button
+      type="submit"
+      form="form_amount"
+      color="green"
+      on:click={() => (open = false)}>Aplicar</Button
+    >
+    <Button color="red" on:click={() => (open = false)}>Cerrar</Button>
+  </svelte:fragment>
+</Modal>

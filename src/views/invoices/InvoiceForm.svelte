@@ -312,7 +312,12 @@
   }
 
   function validatePayments() {
-    if (invoiceHeader.sales_type === 1 && !(totalPayments >= totalAmount)) {
+    console.log(totalPayments);
+    console.log(totalAmount);
+    if (
+      invoiceHeader.sales_type === 1 &&
+      !(Number(totalPayments.toFixed(2)) >= Number(totalAmount.toFixed(2)))
+    ) {
       Swal.fire(
         "Venta al contado",
         "El total pagado debe ser igual o mayor que el monto a pagar.",
