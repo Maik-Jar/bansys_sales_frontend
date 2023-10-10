@@ -162,74 +162,72 @@
     >
   {/if}
 </div>
-<div class="h-[35rem]">
-  <Table shadow hoverable={true}>
-    <TableHead>
-      <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Fact. No.</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Cliente</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}
-        >Comprobante</TableHeadCell
-      >
-      <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
-    </TableHead>
-    <TableBody tableBodyClass={"divide-y min-h-full"}>
-      {#each invoicesObjects.results as invoice, i}
-        <TableBodyRow class="h-5">
-          <TableBodyCell class={"w-[3%] p-2 text-center"}
-            >{(i += 1)}</TableBodyCell
-          >
-          <TableBodyCell class="w-[10%] p-2">{invoice.number}</TableBodyCell>
+<Table
+  shadow
+  hoverable={true}
+  divClass={"relative h-[18rem] xl:h-[22rem] 2xl:h-[40rem] overflow-y-auto mb-5"}
+>
+  <TableHead class={"sticky top-0 w-full"}>
+    <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Fact. No.</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Cliente</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Comprobante</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
+  </TableHead>
+  <TableBody tableBodyClass={"divide-y min-h-full"}>
+    {#each invoicesObjects.results as invoice, i}
+      <TableBodyRow class="h-5">
+        <TableBodyCell class={"w-[3%] p-2 text-center"}
+          >{(i += 1)}</TableBodyCell
+        >
+        <TableBodyCell class="w-[10%] p-2">{invoice.number}</TableBodyCell>
 
-          <TableBodyCell class={"w-[20%] p-2 text-center"}
-            >{invoice.customer.name}</TableBodyCell
+        <TableBodyCell class={"w-[20%] p-2 text-center"}
+          >{invoice.customer.name}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}
+          >{invoice?.receipt_sequence
+            ? $receipt.find((e) => e.id === invoice?.receipt_sequence?.receipt)
+                ?.name
+            : "N/A"}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[12%] p-2 text-center"}
+          >{new Intl.NumberFormat("es-DO", {
+            style: "currency",
+            currency: "DOP",
+          }).format(
+            calculateTotalAmount(invoice.invoice_detail)
+          )}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[12%] p-2 text-center"}
+          >{new Date(invoice.date_created).toLocaleString(
+            "es-DO"
+          )}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}
+          ><Badge rounded color={invoice.status ? "green" : "red"}
+            >{invoice.status ? "Activo" : "Inactivo"}</Badge
+          ></TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}>
+          <A
+            class="!text-amber-500 hover:!text-amber-600"
+            on:click={() => navigateTo("/invoice_form/" + invoice.id)}>Editar</A
           >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}
-            >{invoice?.receipt_sequence
-              ? $receipt.find(
-                  (e) => e.id === invoice?.receipt_sequence?.receipt
-                )?.name
-              : "N/A"}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[12%] p-2 text-center"}
-            >{new Intl.NumberFormat("es-DO", {
-              style: "currency",
-              currency: "DOP",
-            }).format(
-              calculateTotalAmount(invoice.invoice_detail)
-            )}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[12%] p-2 text-center"}
-            >{new Date(invoice.date_created).toLocaleString(
-              "es-DO"
-            )}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}
-            ><Badge rounded color={invoice.status ? "green" : "red"}
-              >{invoice.status ? "Activo" : "Inactivo"}</Badge
-            ></TableBodyCell
-          >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}>
-            <A
-              class="!text-amber-500 hover:!text-amber-600"
-              on:click={() => navigateTo("/invoice_form/" + invoice.id)}
-              >Editar</A
-            >
-          </TableBodyCell>
-        </TableBodyRow>
-      {:else}
-        <TableBodyRow>
-          <TableBodyCell colspan="8" class={" text-center"}
-            >NO HAY DATOS</TableBodyCell
-          >
-        </TableBodyRow>
-      {/each}
-    </TableBody>
-  </Table>
-</div>
+        </TableBodyCell>
+      </TableBodyRow>
+    {:else}
+      <TableBodyRow>
+        <TableBodyCell colspan="8" class={" text-center"}
+          >NO HAY DATOS</TableBodyCell
+        >
+      </TableBodyRow>
+    {/each}
+  </TableBody>
+</Table>
 <div class="flex mt-4 space-x-3 justify-end">
   <PaginationItem on:click={previousPage}>Previous</PaginationItem>
   <PaginationItem on:click={nextPage}>Next</PaginationItem>

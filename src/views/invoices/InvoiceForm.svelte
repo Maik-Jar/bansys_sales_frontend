@@ -79,6 +79,7 @@
             customer.name = data.customer?.name;
             //invoice_details
             invoiceDetails = await data.invoice_detail;
+            console.log(Number.parseFloat(invoiceDetails[0]?.discount));
             //payments
             payments = data.payment;
             //invoice_header
@@ -312,8 +313,6 @@
   }
 
   function validatePayments() {
-    console.log(totalPayments);
-    console.log(totalAmount);
     if (
       invoiceHeader.sales_type === 1 &&
       !(Number(totalPayments.toFixed(2)) >= Number(totalAmount.toFixed(2)))

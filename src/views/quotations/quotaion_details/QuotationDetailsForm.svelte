@@ -69,8 +69,6 @@
     input: "dark:bg-gray-50 dark:text-black",
   };
 
-  $: console.log(quotationDetailsToDelete);
-
   $: if (quotationDetails) {
     calculateTotalTax();
     calculateTotalQuantity();
@@ -116,7 +114,7 @@
       amountForDiscount = ((price * quantity) * discount)
     } else {
       // prettier-ignore
-      amountForDiscount = discount
+      amountForDiscount = parseFloat(discount)
     }
 
     return amountForDiscount;
@@ -287,7 +285,7 @@
 
       quotationDetails = [];
     }
-    console.log(typeof rowId);
+
     if (typeof rowId === "object") {
       quotationDetails = quotationDetails.filter((e) => {
         if (e?.item.id !== rowId?.value.id) {
@@ -398,22 +396,22 @@
     >
   </TableHead>
   <TableBody tableBodyClass="divide-y">
-    {#each quotationDetails as invoiceDetail, i}
+    {#each quotationDetails as quotationDetail, i}
       <TableBodyRow>
         <TableBodyCell class="text-center py-1 px-3">{i + 1}</TableBodyCell>
         <TableBodyCell class=" py-1 px-3"
-          >{invoiceDetail.item.name}</TableBodyCell
+          >{quotationDetail.item.name}</TableBodyCell
         >
         <TableBodyCell class="text-center py-1 px-3"
           >{new Intl.NumberFormat("es-DO").format(
-            invoiceDetail.price
+            quotationDetail.price
           )}</TableBodyCell
         >
         <TableBodyCell
           class="text-center py-1 px-3 cursor-pointer"
-          on:click={() => openQuantityModal(invoiceDetail.id)}
+          on:click={() => openQuantityModal(quotationDetail.id)}
         >
-          {invoiceDetail.quantity}
+          {quotationDetail.quantity}
           <!-- <Input
             size="sm"
             type="number"
@@ -426,14 +424,14 @@
         </TableBodyCell>
         <TableBodyCell class="text-center py-1 px-3">
           {new Intl.NumberFormat("es-DO").format(
-            calculateTax(invoiceDetail.id)
+            calculateTax(quotationDetail.id)
           )}</TableBodyCell
         >
         <TableBodyCell
           class="text-center py-1 px-3 cursor-pointer"
-          on:click={() => openDiscountModal(invoiceDetail.id)}
+          on:click={() => openDiscountModal(quotationDetail.id)}
         >
-          {new Intl.NumberFormat("es-DO").format(invoiceDetail.discount)}
+          {new Intl.NumberFormat("es-DO").format(quotationDetail.discount)}
           <!-- <Input
             size="sm"
             type="number"
@@ -447,7 +445,7 @@
         </TableBodyCell>
         <TableBodyCell class="text-center py-1 px-3">
           {new Intl.NumberFormat("es-DO").format(
-            calculateAmount(invoiceDetail.id)
+            calculateAmount(quotationDetail.id)
           )}
         </TableBodyCell>
         <TableBodyCell class="text-center py-1 px-3">
@@ -455,7 +453,7 @@
             class="m-0"
             size="xs"
             color="red"
-            on:click={() => deleteRow(invoiceDetail.id)}
+            on:click={() => deleteRow(quotationDetail.id)}
             disabled={!quotationActive}
           >
             <svg
