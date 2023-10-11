@@ -165,7 +165,7 @@
 <Table
   shadow
   hoverable={true}
-  divClass={"relative h-[18rem] xl:h-[22rem] 2xl:h-[40rem] overflow-y-auto mb-5"}
+  divClass={"relative h-[18rem] xl:h-[22rem] 2xl:h-[40rem] overflow-y-auto mb-5 bg-white"}
 >
   <TableHead class={"sticky top-0 w-full"}>
     <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
