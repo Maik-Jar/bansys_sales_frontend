@@ -406,10 +406,7 @@
             invoiceDetail.price
           )}</TableBodyCell
         >
-        <TableBodyCell
-          class="text-center py-1 px-3 cursor-pointer"
-          on:click={() => openQuantityModal(invoiceDetail.id)}
-        >
+        <TableBodyCell class="text-center py-1 px-3 cursor-pointer">
           {invoiceDetail.quantity}
           <!-- <Input
               size="sm"
