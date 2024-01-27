@@ -359,6 +359,7 @@
       );
     }
   }
+
   function printInvoice60mm(invoiceID) {
     if (invoiceHeader.status) {
       window.open(
