@@ -19,7 +19,10 @@
     Textarea,
     Badge,
     Span,
+    Dropdown,
+    DropdownItem,
   } from "flowbite-svelte";
+  import { ChevronDownSolid } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
@@ -356,6 +359,16 @@
       );
     }
   }
+  function printInvoice60mm(invoiceID) {
+    if (invoiceHeader.status) {
+      window.open(
+        urls.backendRoute +
+          urls.printInvoice60mmEndpoint +
+          `?invoice_header_id=${invoiceID}&papel_size="60mm"`,
+        "_blank"
+      );
+    }
+  }
 
   onMount(async () => {
     isEditable = (await currentRoute.namedParams.id) ? true : false;
@@ -575,7 +588,17 @@
   <Button
     color="blue"
     type="button"
-    on:click={() => printInvoice(invoiceHeader.id)}
-    disabled={!invoiceHeader.status || !invoiceHeader.id}>Imprimir</Button
+    disabled={!invoiceHeader.status || !invoiceHeader.id}
+    >Imprimir<ChevronDownSolid
+      class="w-3 h-3 ms-2 text-white dark:text-white"
+    /></Button
   >
+  <Dropdown>
+    <DropdownItem on:click={() => printInvoice(invoiceHeader.id)}
+      >A4</DropdownItem
+    >
+    <DropdownItem on:click={() => printInvoice60mm(invoiceHeader.id)}
+      >60mm</DropdownItem
+    >
+  </Dropdown>
 </div>

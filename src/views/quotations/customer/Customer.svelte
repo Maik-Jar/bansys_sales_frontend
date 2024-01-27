@@ -121,6 +121,8 @@
       disabled={!quotationActive}
       on:input={(e) => {
         customer.id = null;
+        customer.phone = "";
+        customer.document_id = "";
       }}
     />
   </div>
@@ -137,6 +139,8 @@
         disabled={!quotationActive}
         on:input={(e) => {
           customer.id = null;
+          customer.phone = "";
+          customer.name = "";
         }}
       />
     </div>
@@ -152,6 +156,8 @@
         disabled={!quotationActive}
         on:input={(e) => {
           customer.id = null;
+          customer.name = "";
+          customer.document_id = "";
         }}
       />
     </div>

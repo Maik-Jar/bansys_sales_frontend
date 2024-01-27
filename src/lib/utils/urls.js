@@ -17,6 +17,7 @@ const pointSales = {
   paymentsMethodsEndpoint: "point_of_sales/api/payments_methods",
   printInvoiceEndpoint: "point_of_sales/api/print/print_invoice",
   printQuotationEndpoint: "point_of_sales/api/print/print_quotation",
+  printInvoice60mmEndpoint: "point_of_sales/api/print/print_invoice_60mm",
 };
 
 export const urls = {

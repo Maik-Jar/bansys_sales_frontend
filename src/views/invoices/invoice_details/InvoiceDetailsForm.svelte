@@ -364,9 +364,6 @@
     disabled={!activeInvoiceDetails || !invoiceActive}>Agregar</Button
   >
 </form>
-<!-- <div
-  class="h-[25rem] relative overflow-y-auto shadow-xl bg-white rounded-xl border-2 border-gray-300 mb-5"
-> -->
 <Table
   hoverable={true}
   shadow
@@ -406,17 +403,11 @@
             invoiceDetail.price
           )}</TableBodyCell
         >
-        <TableBodyCell class="text-center py-1 px-3 cursor-pointer">
+        <TableBodyCell
+          class="text-center py-1 px-3 cursor-pointer"
+          on:click={() => openQuantityModal(invoiceDetail.id)}
+        >
           {invoiceDetail.quantity}
-          <!-- <Input
-              size="sm"
-              type="number"
-              class="m-0 {customColorsClassDark.input}"
-              value={invoiceDetail.quantity}
-              on:input={(e) => updateQuantity(invoiceDetail.id, e.target)}
-              required
-              disabled={!invoiceActive}
-            /> -->
         </TableBodyCell>
         <TableBodyCell class="text-center py-1 px-3">
           {new Intl.NumberFormat("es-DO").format(
@@ -428,16 +419,6 @@
           on:click={() => openDiscountModal(invoiceDetail.id)}
         >
           {new Intl.NumberFormat("es-DO").format(invoiceDetail.discount)}
-          <!-- <Input
-              size="sm"
-              type="number"
-              step="any"
-              class="m-0 {customColorsClassDark.input}"
-              value={invoiceDetail.discount}
-              on:blur={(e) => updateDiscount(invoiceDetail.id, e.target)}
-              required
-              disabled={!invoiceActive}
-            /> -->
         </TableBodyCell>
         <TableBodyCell class="text-center py-1 px-3">
           {new Intl.NumberFormat("es-DO").format(
