@@ -2,7 +2,7 @@
   import { urls } from "../../lib/utils/urls";
   import { navigateTo } from "svelte-router-spa";
   import { onMount } from "svelte";
-  import { receipt } from "../../lib/stores/stores";
+  import { salesTypes } from "../../lib/stores/stores";
   import { hasPermission } from "../../lib/utils/functions";
   import {
     Button,
@@ -16,7 +16,10 @@
     Search,
     A,
     Badge,
+    Dropdown,
+    DropdownItem,
   } from "flowbite-svelte";
+  import { DotsHorizontalOutline } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
@@ -67,7 +70,7 @@
     }
   }
 
-  function calculateDiscount(price, quantity, discount) {
+  function calculateDiscount(total, discount) {
     let amountForDiscount = 0;
     if (discount < 0) {
       return amountForDiscount;
@@ -75,7 +78,7 @@
     // prettier-ignore
     if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
       // prettier-ignore
-      amountForDiscount = ((price * quantity) * discount)
+      amountForDiscount = (total * discount)
     } else {
       // prettier-ignore
       amountForDiscount = discount
@@ -84,36 +87,50 @@
     return amountForDiscount;
   }
 
-  function calculateTax(invoiceDetail, invoiceDetailID) {
-    const invoiceDetailObject = invoiceDetail.find(
-      (e) => e.id === invoiceDetailID
-    );
-    // prettier-ignore
-    return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
-  }
+  //   function calculateTax(invoiceDetail, invoiceDetailID) {
+  //     const invoiceDetailObject = invoiceDetail.find(
+  //       (e) => e.id === invoiceDetailID
+  //     );
+  //     // prettier-ignore
+  //     return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
+  //   }
 
   function calculateAmount(invoiceDetail, invoiceDetailID) {
     const invoiceDetailObject = invoiceDetail.find(
       (e) => e.id === invoiceDetailID
     );
 
-    return (
-      calculateTax(invoiceDetail, invoiceDetailID) +
-      (invoiceDetailObject.price * invoiceDetailObject.quantity -
-        calculateDiscount(
-          invoiceDetailObject.price,
-          invoiceDetailObject.quantity,
-          invoiceDetailObject.discount
-        ))
-    );
+    return invoiceDetailObject.price * invoiceDetailObject.quantity;
   }
 
-  function calculateTotalAmount(invoiceDetails) {
+  function calculateTotal(invoiceDetails, generalDiscount) {
     let sumAmounts = 0;
     invoiceDetails.map((e) => {
       sumAmounts += calculateAmount(invoiceDetails, e.id);
     });
-    return sumAmounts;
+    return sumAmounts - calculateDiscount(sumAmounts, generalDiscount);
+  }
+
+  function printInvoice(invoiceID, status) {
+    if (status) {
+      window.open(
+        urls.backendRoute +
+          urls.printInvoiceEndpoint +
+          `?invoice_header_id=${invoiceID}&papel_size="A4"`,
+        "_blank"
+      );
+    }
+  }
+
+  function printInvoice60mm(invoiceID, status) {
+    if (status) {
+      window.open(
+        urls.backendRoute +
+          urls.printInvoice60mmEndpoint +
+          `?invoice_header_id=${invoiceID}&papel_size="60mm"`,
+        "_blank"
+      );
+    }
   }
 
   onMount(() => {
@@ -172,6 +189,7 @@
     <TableHeadCell scope="col" class={"text-center"}>Fact. No.</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Cliente</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Comprobante</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Venta</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
@@ -190,16 +208,19 @@
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}
           >{invoice?.receipt_sequence
-            ? $receipt.find((e) => e.id === invoice?.receipt_sequence?.receipt)
-                ?.name
+            ? invoice?.receipt_sequence?.receipt?.name
             : "N/A"}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}
+          >{$salesTypes.find((e) => e.id === invoice?.sales_type)
+            ?.name}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
           >{new Intl.NumberFormat("es-DO", {
             style: "currency",
             currency: "DOP",
           }).format(
-            calculateTotalAmount(invoice.invoice_detail)
+            calculateTotal(invoice.invoice_detail, invoice.discount)
           )}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
@@ -213,10 +234,24 @@
           ></TableBodyCell
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}>
-          <A
-            class="!text-amber-500 hover:!text-amber-600"
-            on:click={() => navigateTo("/invoice_form/" + invoice.id)}>Editar</A
-          >
+          <div class="flex justify-center">
+            <DotsHorizontalOutline />
+            <Dropdown>
+              <DropdownItem
+                on:click={() => navigateTo("/invoice_form/" + invoice.id)}
+              >
+                Editar</DropdownItem
+              >
+              <DropdownItem
+                on:click={() => printInvoice(invoice.id, invoice.status)}
+                >Imprimir A4</DropdownItem
+              >
+              <DropdownItem
+                on:click={() => printInvoice60mm(invoice.id, invoice.status)}
+                >Imprimir 60mm</DropdownItem
+              >
+            </Dropdown>
+          </div>
         </TableBodyCell>
       </TableBodyRow>
     {:else}

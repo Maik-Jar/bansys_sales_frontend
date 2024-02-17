@@ -3,22 +3,18 @@
   import { isNumeric } from "../../../lib/utils/functions";
   import Swal from "sweetalert2";
   import {
-    Table,
-    TableBody,
-    TableBodyCell,
-    TableBodyRow,
-    TableHead,
-    TableHeadCell,
+    Card,
     Input,
     Select,
     CloseButton,
     Button,
     Modal,
+    Label,
   } from "flowbite-svelte";
 
   export let payments = [];
   export let totalPayments = 0;
-  export let calculateChange;
+  export let calculatePending;
   export let invoiceDetails = [];
   export let invoiceHeader;
 
@@ -35,7 +31,7 @@
 
   $: if (payments) {
     calculateTotalPayments();
-    calculateChange();
+    calculatePending();
   }
 
   $: if (
@@ -48,7 +44,10 @@
     activePayments = false;
   }
 
-  function addRowPayment() {
+  function addRowPayment(e) {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+
     if (activePayments) {
       if (payments?.length >= 3) {
         Swal.fire(
@@ -62,13 +61,15 @@
 
         const payment = {
           id: id,
-          amount: 0.0,
-          payment_method: 1,
+          amount: data?.amount,
+          payment_method: data?.paymentMethod,
         };
 
         payments = [...payments, payment];
       }
     }
+
+    e.target.reset();
   }
 
   function updateRowPaymentAmount(paymentId, value) {
@@ -107,6 +108,11 @@
     }
   }
 
+  function openModal(paymentRowId) {
+    paymentRow = payments.find((e) => e.id === paymentRowId);
+    open = true;
+  }
+
   function calculateTotalPayments() {
     let sumPayments = 0;
 
@@ -116,14 +122,9 @@
 
     totalPayments = sumPayments;
   }
-
-  function openModal(paymentRowId) {
-    paymentRow = payments.find((e) => e.id === paymentRowId);
-    open = true;
-  }
 </script>
 
-<div class="col-start-4 row-span-3 row-start-1">
+<!-- <div class="col-start-4 row-span-3 row-start-1">
   <Table
     hoverable={true}
     shadow
@@ -161,16 +162,6 @@
               style: "currency",
               currency: "DOP",
             }).format(payment.amount)}
-            <!-- <Input
-            size="sm"
-            type="number"
-            step="0.01"
-            class={customColorsClassDark.input}
-            value={payment.amount}
-            on:blur={(e) => updateRowPaymentAmount(payment.id, e.target)}
-            required={activePayments}
-            disabled={!activePayments}
-          /> -->
           </TableBodyCell>
           <TableBodyCell class="px-3 py-1 text-center">
             <Select
@@ -209,7 +200,7 @@
       </tr>
     </tfoot>
   </Table>
-</div>
+</div> -->
 
 <Modal title="Monto pagado" bind:open size="sm">
   <form
@@ -247,3 +238,76 @@
     <Button color="red" on:click={() => (open = false)}>Cerrar</Button>
   </svelte:fragment>
 </Modal>
+
+<div class="w-full p-5">
+  <div class="flex justify-between">
+    <form
+      id="paymentForm"
+      class="flex space-x-4"
+      on:submit|preventDefault|stopPropagation={addRowPayment}
+    >
+      <div>
+        <Label for="amount" class="mb-2">Monto</Label>
+        <Input
+          id="amount"
+          name="amount"
+          type="number"
+          step="0.01"
+          class={customColorsClassDark.input}
+          on:blur={(e) => (tempAmount = e.target)}
+          required={activePayments}
+          disabled={!activePayments}
+        />
+      </div>
+      <div>
+        <Label for="paymentMethod" class="mb-2">Metodo</Label>
+        <Select
+          id="paymentMethod"
+          name="paymentMethod"
+          required={activePayments}
+          disabled={!activePayments}
+        >
+          {#each $paymentMethods as { id, name }}
+            <option value={id}>{name}</option>
+          {/each}
+        </Select>
+      </div>
+    </form>
+    <Button
+      color="blue"
+      type="submit"
+      form="paymentForm"
+      disabled={!activePayments}>Agregar</Button
+    >
+  </div>
+  <div
+    class="flex flex-col place-items-center space-y-3 p-3 border border-1 bg-gray-200 dark:bg-white border-gray-400 rounded-lg mt-5 min-h-40"
+  >
+    {#each payments as payment}
+      <Card size="xl">
+        <div class="flex justify-between min-w-72">
+          <div>
+            <h5
+              class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+            >
+              {new Intl.NumberFormat("es-DO", {
+                style: "currency",
+                currency: "DOP",
+              }).format(payment.amount)}
+            </h5>
+            <p
+              class="font-normal text-gray-700 dark:text-gray-400 leading-tight"
+            >
+              {$paymentMethods.find((e) => e.id == payment.payment_method)
+                ?.name}
+            </p>
+          </div>
+          <CloseButton
+            on:click={() => deleteRowPayment(payment.id)}
+            disabled={!activePayments}
+          />
+        </div>
+      </Card>
+    {/each}
+  </div>
+</div>

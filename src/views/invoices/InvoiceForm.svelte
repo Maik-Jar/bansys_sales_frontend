@@ -3,10 +3,11 @@
   import Swal from "sweetalert2";
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
-  import { receipt, salesTypes } from "../../lib/stores/stores";
+  import { salesTypes } from "../../lib/stores/stores";
   import InvoiceDetailsForm from "./invoice_details/InvoiceDetailsForm.svelte";
   import Customer from "./customer/Customer.svelte";
   import Payment from "./payment/Payment.svelte";
+  import Receipt from "./receipt/Receipt.svelte";
   import { hasPermission } from "../../lib/utils/functions";
   import {
     Heading,
@@ -21,6 +22,7 @@
     Span,
     Dropdown,
     DropdownItem,
+    Modal,
   } from "flowbite-svelte";
   import { ChevronDownSolid } from "flowbite-svelte-icons";
 
@@ -33,8 +35,9 @@
   const invoiceHeader = Object.seal({
     id: null,
     number: null,
-    receipt: Object.seal({ id: 1 }),
-    receipt_sequence: null,
+    // receipt: {},
+    // receipt_sequence: {},
+    tax: 0.0,
     discount: 0.0,
     sales_type: 1,
     comment: null,
@@ -49,17 +52,41 @@
     id: null,
     name: null,
   });
+  let receiptSequence = {};
+  let receipt = {};
   let invoiceDetails = [];
   let payments = [];
   let invoiceDetailsToDelete = [];
+
   let isEditable = false;
-  let change = 0;
+  let pending = 0;
+  let subTotal = 0;
+  let totalTax = 0;
+  let totalDiscoint = 0;
   let totalAmount = 0;
   let totalPayments = 0;
   let getCustomerForIdonChild;
   let addInvoiceDetailsAtSelectedItem;
+  let assignReceipt;
+  let discountModal = false;
+  let paymentsModal = false;
 
   $: activeInvoiceDetails = customer?.id ? true : false;
+  $: if (invoiceDetails) {
+    calculateSubtotal();
+    calculateTax();
+    calculateTotal();
+    calculatePending();
+  }
+  $: {
+    invoiceHeader.discount = invoiceHeader.discount
+      ? invoiceHeader.discount
+      : 0.0;
+    calculateDiscount();
+    calculateTax();
+    calculateTotal();
+    calculatePending();
+  }
 
   function getInvoice() {
     if (isEditable) {
@@ -82,15 +109,15 @@
             customer.name = data.customer?.name;
             //invoice_details
             invoiceDetails = await data.invoice_detail;
-            console.log(Number.parseFloat(invoiceDetails[0]?.discount));
             //payments
             payments = data.payment;
+            //receipt_sequence
+            receiptSequence = data.receipt_sequence;
             //invoice_header
             invoiceHeader.id = data.id;
             invoiceHeader.number = data.number;
-            // invoiceHeader.receipt = data.receipt;
-            invoiceHeader.receipt_sequence = data.receipt_sequence;
             invoiceHeader.discount = data.discount;
+            invoiceHeader.tax = data.tax;
             invoiceHeader.sales_type = data.sales_type;
             invoiceHeader.comment = data.comment;
             invoiceHeader.date_created = new Date(
@@ -104,8 +131,10 @@
             invoiceHeader.status = data.status;
 
             getCustomerForIdonChild();
-            calculateChange();
+            calculatePending();
             addInvoiceDetailsAtSelectedItem(invoiceDetails);
+            assignReceipt(receiptSequence);
+            calculatePayments();
           }
         })
         .catch((error) => {
@@ -120,6 +149,7 @@
       invoice_detail: invoiceDetails,
       customer: customer,
       payment: payments,
+      receipt: receipt,
     };
     Swal.fire({
       title: "¿Quieres crear esta nueva factura?",
@@ -145,7 +175,7 @@
               const data = await res.json();
               invoiceHeader.id = data.id;
               invoiceHeader.number = data.number;
-              invoiceHeader.receipt_sequence = data.receipt_sequence;
+              receiptSequence = data.receipt_sequence;
               invoiceHeader.date_created = new Date(
                 data.date_created
               ).toLocaleString("es-DO");
@@ -178,6 +208,7 @@
       invoice_detail: invoiceDetails,
       customer: customer,
       invoice_detail_to_delete: invoiceDetailsToDelete,
+      receipt: receipt,
     };
     Swal.fire({
       title: "¿Quieres guardar los datos?",
@@ -287,12 +318,50 @@
     });
   }
 
-  function calculateChange() {
-    change = totalPayments - totalAmount;
+  function calculatePending() {
+    pending = 0;
+    pending = totalAmount - totalPayments;
+    if (pending < 0) {
+      pending = 0;
+    }
+  }
 
-    // if (change < 0) {
-    //   change = 0;
-    // }
+  function calculateSubtotal() {
+    subTotal = 0;
+    invoiceDetails.map((e) => (subTotal += e.quantity * e.price));
+  }
+
+  function calculateDiscount() {
+    totalDiscoint = 0;
+    if (invoiceHeader.discount < 0 || invoiceHeader.discount == 0) {
+      return totalDiscoint;
+    }
+    // prettier-ignore
+    if (!Number.isInteger(invoiceHeader.discount) && (invoiceHeader.discount > 0 && invoiceHeader.discount < 1)) {
+        // prettier-ignore
+        totalDiscoint = (subTotal * invoiceHeader.discount)
+      } else {
+        // prettier-ignore
+        totalDiscoint = invoiceHeader.discount ? invoiceHeader.discount : 0.00
+      }
+  }
+
+  function calculatePayments() {
+    totalPayments = 0;
+    if (payments.length > 0) {
+      payments.map((e) => (totalPayments += Number.parseFloat(e.amount)));
+    }
+  }
+
+  function calculateTax() {
+    totalTax = 0;
+
+    totalTax = (subTotal - totalDiscoint) * (receipt?.tax?.percentage / 100);
+  }
+
+  function calculateTotal() {
+    totalAmount = 0;
+    totalAmount = subTotal - totalDiscoint + totalTax;
   }
 
   function validateCustomer() {
@@ -442,68 +511,24 @@
       ></Heading
     >
 
-    <Label class={customColorsClassDark.label}
-      >Tipo de comprobante
-      <Select
-        class="mt-2 {customColorsClassDark.input}"
-        bind:value={invoiceHeader.receipt.id}
-        required={!isEditable}
-        disabled={isEditable}
-      >
-        {#each $receipt as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
-      </Select>
-    </Label>
-    <div class="flex space-x-3">
-      <div class="w-full">
-        <Label for="receiptSequence" class="mb-2 {customColorsClassDark.label}"
-          >No. Comprobante</Label
-        >
-        <ButtonGroup class="w-full">
-          <InputAddon>
-            {#await $receipt}
-              ...
-            {:then response}
-              {response.find((e) => e.id === invoiceHeader.receipt.id)?.serial}
-            {/await}
-          </InputAddon>
-          <Input
-            id="receiptSequence"
-            class={customColorsClassDark.input}
-            value={invoiceHeader.receipt_sequence?.sequence}
-            readonly
-          />
-        </ButtonGroup>
-      </div>
-      <div class="w-full">
-        <Label
-          for="recepitExpiration"
-          class="mb-2 {customColorsClassDark.label}">Fecha de expiración</Label
-        >
-        <Input
-          id="recepitExpiration"
-          type="text"
-          class={customColorsClassDark.input}
-          value={$receipt.find((e) => e.id === invoiceHeader.receipt.id)
-            ?.expiration}
-          readonly
-        />
-      </div>
-    </div>
+    <Receipt
+      bind:receipt
+      bind:receiptSequence
+      bind:isEditable
+      bind:assignReceipt
+    />
   </div>
   <InvoiceDetailsForm
     bind:invoiceDetails
     bind:invoiceDetailsToDelete
-    bind:totalAmount
     bind:addInvoiceDetailsAtSelectedItem
     bind:invoiceHeaderDiscont={invoiceHeader.discount}
     invoiceActive={invoiceHeader.status}
     {activeInvoiceDetails}
-    {calculateChange}
+    calculateChange={calculatePending}
   />
-  <div class="grid grid-cols-4 gap-4">
-    <div class="col-start-1 row-span-3">
+  <div class="grid grid-cols-2 gap-5">
+    <div class="max-w-full">
       <Label for="textarea-id" class="mb-2 {customColorsClassDark.label}"
         >Comentarios</Label
       >
@@ -516,54 +541,124 @@
         disabled={!invoiceHeader.status}
       />
     </div>
-    <div class="col-start-3">
-      <Label for="price" class="mb-2 {customColorsClassDark.label}"
-        >Descuento General</Label
-      >
-      <ButtonGroup class="w-full">
-        <InputAddon>DOP$</InputAddon>
-        <Input
-          id="price"
-          step="any"
-          class={customColorsClassDark.input}
-          type="number"
-          bind:value={invoiceHeader.discount}
-          on:blur={appliyGeneralDiscount}
+    <div class="flex flex-col space-y-3 justify-self-end min-w-[70%]">
+      <Label class={customColorsClassDark.label}
+        >Tipo de venta
+        <Select
+          class="mt-2 {customColorsClassDark.input}"
+          bind:value={invoiceHeader.sales_type}
           required={invoiceHeader.status}
           disabled={!invoiceHeader.status}
-        />
-      </ButtonGroup>
+        >
+          {#each $salesTypes as { id, name }}
+            <option value={id}>{name}</option>
+          {/each}
+        </Select>
+      </Label>
+      <div class="flex justify-center space-x-3">
+        <Button
+          color="green"
+          class="min-w-[49%]"
+          on:click={() => (discountModal = true)}>Aplicar Descuento</Button
+        >
+        <Button
+          color="blue"
+          class="min-w-[49%]"
+          on:click={() => (paymentsModal = true)}>Aplicar Pagos</Button
+        >
+      </div>
+      <div class="bg-white border-2 border-gray-300 shadow-lg p-5 rounded-lg">
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Subtotal:
+          </Heading>
+          <Span highlight class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(subTotal)}</Span
+          >
+        </div>
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Descuento:
+          </Heading>
+          <Span highlight class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(totalDiscoint)}</Span
+          >
+        </div>
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Impuesto:
+          </Heading>
+          <Span highlight class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(totalTax)}</Span
+          >
+        </div>
+        <hr class="my-2 bg-gray-400 h-1" />
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Total:
+          </Heading>
+          <Span
+            highlight
+            highlightClass="text-red-600 dark:text-red-500"
+            class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(totalAmount)}</Span
+          >
+        </div>
+        <hr class="my-2 bg-gray-400 h-1" />
+        <div class="flex justify-between">
+          <Heading tag="h4" class={customColorsClassDark.label}>
+            Pagado:
+          </Heading>
+          <Span
+            highlight
+            highlightClass="text-green-600 dark:text-green-500"
+            class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(totalPayments)}</Span
+          >
+        </div>
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Pendiente:
+          </Heading>
+          {#if pending > 0}
+            <Span
+              highlight
+              highlightClass="text-red-600 dark:text-red-500"
+              class="text-2xl text-end"
+              >{Intl.NumberFormat("es-DO", {
+                style: "currency",
+                currency: "DOP",
+              }).format(pending)}</Span
+            >
+          {:else}
+            <Span
+              highlight
+              highlightClass="text-green-600 dark:text-green-500"
+              class="text-2xl text-end"
+              >{Intl.NumberFormat("es-DO", {
+                style: "currency",
+                currency: "DOP",
+              }).format(pending)}</Span
+            >
+          {/if}
+        </div>
+      </div>
     </div>
-    <Label class="{customColorsClassDark.label} col-start-3"
-      >Tipo de venta
-      <Select
-        class="mt-2 {customColorsClassDark.input}"
-        bind:value={invoiceHeader.sales_type}
-        required={invoiceHeader.status}
-        disabled={!invoiceHeader.status}
-      >
-        {#each $salesTypes as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
-      </Select>
-    </Label>
-    <div class="col-start-3 text-center">
-      <Heading tag="h3" class=" {customColorsClassDark.label}"
-        >Cambio: <Span highlight
-          >{Intl.NumberFormat("es-DO", {
-            style: "currency",
-            currency: "DOP",
-          }).format(change)}</Span
-        ></Heading
-      >
-    </div>
-    <Payment
-      bind:payments
-      bind:totalPayments
-      {calculateChange}
-      {invoiceDetails}
-      {invoiceHeader}
-    />
   </div>
 </form>
 <div class="flex space-x-3 mt-5">
@@ -603,3 +698,42 @@
     >
   </Dropdown>
 </div>
+
+<!-- modals -->
+<Modal title="Aplicar descuentos" bind:open={discountModal} autoclose>
+  <div>
+    <Label for="price" class="mb-2 {customColorsClassDark.label}"
+      >Descuento General</Label
+    >
+    <ButtonGroup class="w-full">
+      <InputAddon>DOP$</InputAddon>
+      <Input
+        id="price"
+        step="any"
+        class={customColorsClassDark.input}
+        type="number"
+        bind:value={invoiceHeader.discount}
+        required={invoiceHeader.status}
+        disabled={!invoiceHeader.status}
+      />
+    </ButtonGroup>
+  </div>
+  <svelte:fragment slot="footer">
+    <Button color="alternative">Cerrar</Button>
+  </svelte:fragment>
+</Modal>
+
+<Modal title="Aplicar pagos" bind:open={paymentsModal} autoclose={false}>
+  <Payment
+    bind:payments
+    bind:totalPayments
+    {calculatePending}
+    {invoiceDetails}
+    {invoiceHeader}
+  />
+  <svelte:fragment slot="footer">
+    <Button color="alternative" on:click={() => (paymentsModal = false)}
+      >Cerrar</Button
+    >
+  </svelte:fragment>
+</Modal>

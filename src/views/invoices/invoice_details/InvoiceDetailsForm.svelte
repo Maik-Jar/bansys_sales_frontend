@@ -2,7 +2,7 @@
   import { isNumeric } from "../../../lib/utils/functions";
   import { onMount } from "svelte";
   import { urls } from "../../../lib/utils/urls";
-  import { taxes, items } from "../../../lib/stores/stores";
+  import { items } from "../../../lib/stores/stores";
   import Swal from "sweetalert2";
   import MultiSelect from "svelte-multiselect";
   import {
@@ -24,7 +24,6 @@
   export let activeInvoiceDetails = false;
   export let invoiceDetailsToDelete = [];
   export let invoiceHeaderDiscont = 0.0;
-  export let totalAmount = 0;
   export let calculateChange;
   export const addInvoiceDetailsAtSelectedItem = (invoice_details) => {
     invoice_details.map((e) => {
@@ -55,13 +54,13 @@
   let counter = 0;
   let defaultModal = false;
   let quantityModal = false;
-  let discountModal = false;
-  let totalQuantity = 0;
-  let totalTax = 0;
-  let totalDiscount = 0;
+  //   let discountModal = false;
+  //   let totalQuantity = 0;
+  //   let totalTax = 0;
+  //   let totalDiscount = 0;
   let rowDetail;
   let tempQuantity;
-  let tempDiscount;
+  //   let tempDiscount;
 
   const customColorsClassDark = {
     label: "dark:text-gray-500",
@@ -69,10 +68,10 @@
   };
 
   $: if (invoiceDetails) {
-    calculateTotalTax();
-    calculateTotalQuantity();
-    calculateTotalAmount();
-    calulateTotalDiscount();
+    // calculateTotalTax();
+    // calculateTotalQuantity();
+    // calculateTotalAmount();
+    // calulateTotalDiscount();
     calculateChange();
   }
 
@@ -103,30 +102,30 @@
       });
   }
 
-  function calculateDiscount(price, quantity, discount) {
-    let amountForDiscount = 0;
-    if (discount < 0 || discount == 0) {
-      return amountForDiscount;
-    }
-    // prettier-ignore
-    if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
-      // prettier-ignore
-      amountForDiscount = ((price * quantity) * discount)
-    } else {
-      // prettier-ignore
-      amountForDiscount = parseFloat(discount)
-    }
+  //   function calculateDiscount(price, quantity, discount) {
+  //     let amountForDiscount = 0;
+  //     if (discount < 0 || discount == 0) {
+  //       return amountForDiscount;
+  //     }
+  //     // prettier-ignore
+  //     if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
+  //       // prettier-ignore
+  //       amountForDiscount = ((price * quantity) * discount)
+  //     } else {
+  //       // prettier-ignore
+  //       amountForDiscount = parseFloat(discount)
+  //     }
 
-    return amountForDiscount;
-  }
+  //     return amountForDiscount;
+  //   }
 
-  function calculateTax(invoiceDetailID) {
-    const invoiceDetailObject = invoiceDetails.find(
-      (e) => e.id === invoiceDetailID
-    );
-    // prettier-ignore
-    return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
-  }
+  //   function calculateTax(invoiceDetailID) {
+  //     const invoiceDetailObject = invoiceDetails.find(
+  //       (e) => e.id === invoiceDetailID
+  //     );
+  //     // prettier-ignore
+  //     return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
+  //   }
 
   function calculateAmount(invoiceDetailID) {
     const invoiceDetailObject = invoiceDetails.find(
@@ -134,47 +133,48 @@
     );
 
     return (
-      calculateTax(invoiceDetailID) +
-      (invoiceDetailObject.price * invoiceDetailObject.quantity -
-        calculateDiscount(
-          invoiceDetailObject.price,
-          invoiceDetailObject.quantity,
-          invoiceDetailObject.discount
-        ))
+      //   calculateTax(invoiceDetailID) +
+      //   (
+      invoiceDetailObject.price * invoiceDetailObject.quantity
+      //     - calculateDiscount(
+      //       invoiceDetailObject.price,
+      //       invoiceDetailObject.quantity,
+      //       invoiceDetailObject.discount
+      //     ))
     );
   }
 
-  function calculateTotalQuantity() {
-    let sumQuantity = 0;
-    invoiceDetails.map((e) => {
-      sumQuantity += e.quantity;
-    });
-    totalQuantity = sumQuantity;
-  }
+  //   function calculateTotalQuantity() {
+  //     let sumQuantity = 0;
+  //     invoiceDetails.map((e) => {
+  //       sumQuantity += e.quantity;
+  //     });
+  //     totalQuantity = sumQuantity;
+  //   }
 
-  function calculateTotalTax() {
-    let sumTaxes = 0;
-    invoiceDetails.map((e) => {
-      sumTaxes += calculateTax(e.id);
-    });
-    totalTax = sumTaxes;
-  }
+  //   function calculateTotalTax() {
+  //     let sumTaxes = 0;
+  //     invoiceDetails.map((e) => {
+  //       sumTaxes += calculateTax(e.id);
+  //     });
+  //     totalTax = sumTaxes;
+  //   }
 
-  function calculateTotalAmount() {
-    let sumAmounts = 0;
-    invoiceDetails.map((e) => {
-      sumAmounts += calculateAmount(e.id);
-    });
-    totalAmount = sumAmounts;
-  }
+  //   function calculateTotalAmount() {
+  //     let sumAmounts = 0;
+  //     invoiceDetails.map((e) => {
+  //       sumAmounts += calculateAmount(e.id);
+  //     });
+  //     totalAmount = sumAmounts;
+  //   }
 
-  function calulateTotalDiscount() {
-    let sumDiscounts = 0;
-    invoiceDetails.map((e) => {
-      sumDiscounts += calculateDiscount(e.price, e.quantity, e.discount);
-    });
-    totalDiscount = sumDiscounts;
-  }
+  //   function calulateTotalDiscount() {
+  //     let sumDiscounts = 0;
+  //     invoiceDetails.map((e) => {
+  //       sumDiscounts += calculateDiscount(e.price, e.quantity, e.discount);
+  //     });
+  //     totalDiscount = sumDiscounts;
+  //   }
 
   function generateRowId() {
     counter++;
@@ -191,11 +191,11 @@
             item: { id: e.value.id, name: e.value.name },
             quantity: 1,
             price: e.value.price,
-            tax: $taxes.find((i) => i.id == e.value.tax)?.percentage / 100,
-            discount:
-              invoiceHeaderDiscont > 0 && invoiceHeaderDiscont < 1
-                ? invoiceHeaderDiscont
-                : 0,
+            // tax: $taxes.find((i) => i.id == e.value.tax)?.percentage / 100,
+            // discount:
+            //   invoiceHeaderDiscont > 0 && invoiceHeaderDiscont < 1
+            //     ? invoiceHeaderDiscont
+            //     : 0,
           };
           invoiceDetails = [...invoiceDetails, invoiceDetail];
         }
@@ -210,11 +210,11 @@
             item: { id: insertItem.id, name: insertItem.name },
             quantity: 1,
             price: insertItem.price,
-            tax: $taxes.find((e) => insertItem.tax)?.percentage / 100,
-            discount:
-              invoiceHeaderDiscont > 0 && invoiceHeaderDiscont < 1
-                ? invoiceHeaderDiscont
-                : 0,
+            // tax: $taxes.find((e) => insertItem.tax)?.percentage / 100,
+            // discount:
+            //   invoiceHeaderDiscont > 0 && invoiceHeaderDiscont < 1
+            //     ? invoiceHeaderDiscont
+            //     : 0,
           };
           invoiceDetails = [...invoiceDetails, invoiceDetail];
           const addItem = $items.find((e) => e.id == item);
@@ -226,7 +226,7 @@
                 id: addItem.id,
                 name: addItem.name,
                 price: addItem.price,
-                tax: addItem.tax,
+                // tax: addItem.tax,
               },
             },
           ];
@@ -250,27 +250,41 @@
     return true;
   }
 
-  function updateQuantity(rowId, value) {
-    invoiceDetails = invoiceDetails.map((e, index) => {
-      if (e.id === rowId) {
-        e.quantity = value ? Number(value) : 1;
-      }
-      return e;
-    });
-  }
+  function updateQuantity(e, rowId) {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
 
-  function updateDiscount(rowId, value) {
-    if (!value) {
-      return;
-    }
-    invoiceDetails = invoiceDetails.map((e) => {
-      if (e.id === rowId) {
-        e.discount = Number.parseFloat(value);
+    invoiceDetails = invoiceDetails.map((el, index) => {
+      if (el.id === rowId) {
+        el.quantity = Number(data.quantity) > 0 ? Number(data.quantity) : 1;
       }
-      return e;
+      return el;
     });
-    invoiceHeaderDiscont = 0;
+
+    quantityModal = false;
   }
+  //   function updateQuantity(rowId, value) {
+  //     console.log("me ejecute");
+  //     invoiceDetails = invoiceDetails.map((e, index) => {
+  //       if (e.id === rowId) {
+  //         e.quantity = value ? Number(value) : 1;
+  //       }
+  //       return e;
+  //     });
+  //   }
+
+  //   function updateDiscount(rowId, value) {
+  //     if (!value) {
+  //       return;
+  //     }
+  //     invoiceDetails = invoiceDetails.map((e) => {
+  //       if (e.id === rowId) {
+  //         e.discount = Number.parseFloat(value);
+  //       }
+  //       return e;
+  //     });
+  //     invoiceHeaderDiscont = 0;
+  //   }
 
   function deleteRow(rowId, all = false) {
     if (all) {
@@ -326,10 +340,10 @@
     quantityModal = true;
   }
 
-  function openDiscountModal(rowId) {
-    rowDetail = invoiceDetails.find((e) => e.id === rowId);
-    discountModal = true;
-  }
+  //   function openDiscountModal(rowId) {
+  //     rowDetail = invoiceDetails.find((e) => e.id === rowId);
+  //     discountModal = true;
+  //   }
 
   onMount(() => {
     getItems();
@@ -367,7 +381,7 @@
 <Table
   hoverable={true}
   shadow
-  divClass={"relative h-[25rem] overflow-y-auto mb-5"}
+  divClass={"relative h-[25rem] overflow-y-auto mb-5 bg-white"}
 >
   <TableHead class={"sticky top-0 w-full"}>
     <TableHeadCell padding={"px-3 py-3"} class="text-center">#</TableHeadCell>
@@ -379,11 +393,11 @@
     <TableHeadCell padding={"px-3 py-3"} class="text-center"
       >Cant.</TableHeadCell
     >
-    <TableHeadCell padding={"px-3 py-3"} class="text-center">Imp.</TableHeadCell
-    >
-    <TableHeadCell padding={"px-3 py-3"} class="text-center"
+    <!-- <TableHeadCell padding={"px-3 py-3"} class="text-center">Imp.</TableHeadCell
+    > -->
+    <!-- <TableHeadCell padding={"px-3 py-3"} class="text-center"
       >Descto.</TableHeadCell
-    >
+    > -->
     <TableHeadCell padding={"px-3 py-3"} class="text-center"
       >Monto</TableHeadCell
     >
@@ -409,17 +423,12 @@
         >
           {invoiceDetail.quantity}
         </TableBodyCell>
-        <TableBodyCell class="text-center py-1 px-3">
-          {new Intl.NumberFormat("es-DO").format(
-            calculateTax(invoiceDetail.id)
-          )}</TableBodyCell
-        >
-        <TableBodyCell
+        <!-- <TableBodyCell
           class="text-center py-1 px-3 cursor-pointer"
           on:click={() => openDiscountModal(invoiceDetail.id)}
         >
           {new Intl.NumberFormat("es-DO").format(invoiceDetail.discount)}
-        </TableBodyCell>
+        </TableBodyCell> -->
         <TableBodyCell class="text-center py-1 px-3">
           {new Intl.NumberFormat("es-DO").format(
             calculateAmount(invoiceDetail.id)
@@ -455,7 +464,7 @@
       </TableBodyRow>
     {/each}
   </TableBody>
-  <tfoot class="sticky bottom-0">
+  <!-- <tfoot class="sticky bottom-0">
     <tr class="font-semibold text-gray-900 dark:text-white dark:bg-gray-700">
       <th colspan="2" scope="row" class="py-3 px-6 text-left">Total</th>
       <th />
@@ -480,7 +489,7 @@
       >
       <td class="py-3 px-6" />
     </tr>
-  </tfoot>
+  </tfoot> -->
 </Table>
 
 <!-- </div> -->
@@ -507,33 +516,29 @@
   title="Cantidad del item: {rowDetail?.item.name}"
   bind:open={quantityModal}
   size="sm"
+  autoclose={false}
 >
   <form
     id="form_quantity"
-    on:submit|preventDefault|stopPropagation={() =>
-      updateQuantity(rowDetail.id, tempQuantity?.value)}
+    on:submit|preventDefault|stopPropagation={(e) =>
+      updateQuantity(e, rowDetail.id)}
   >
     <Input
       type="number"
+      name="quantity"
       class="m-0 {customColorsClassDark.input}"
       value={rowDetail.quantity}
-      on:input={(e) => (tempQuantity = e.target)}
       required
       disabled={!invoiceActive}
     />
   </form>
   <svelte:fragment slot="footer">
-    <Button
-      type="submit"
-      form="form_quantity"
-      color="green"
-      on:click={() => (quantityModal = false)}>Aplicar</Button
-    >
+    <Button type="submit" form="form_quantity" color="green">Aplicar</Button>
     <Button color="red" on:click={() => (quantityModal = false)}>Cerrar</Button>
   </svelte:fragment>
 </Modal>
 
-<Modal
+<!-- <Modal
   title="Descuento al item: {rowDetail?.item.name}"
   bind:open={discountModal}
   size="sm"
@@ -562,4 +567,4 @@
     >
     <Button color="red" on:click={() => (discountModal = false)}>Cerrar</Button>
   </svelte:fragment>
-</Modal>
+</Modal> -->
