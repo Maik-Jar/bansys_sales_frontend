@@ -1,6 +1,7 @@
 <script>
   import { urls } from "../../lib/utils/urls";
   import { navigateTo } from "svelte-router-spa";
+  import { salesTypes } from "../../lib/stores/stores";
   import { onMount } from "svelte";
   import { hasPermission } from "../../lib/utils/functions";
   import {
@@ -13,9 +14,11 @@
     TableHeadCell,
     PaginationItem,
     Search,
-    A,
     Badge,
+    Dropdown,
+    DropdownItem,
   } from "flowbite-svelte";
+  import { DotsHorizontalOutline } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
@@ -66,15 +69,14 @@
     }
   }
 
-  function calculateDiscount(price, quantity, discount) {
+  function calculateDiscount(total, discount) {
     let amountForDiscount = 0;
     if (discount < 0) {
       return amountForDiscount;
     }
     // prettier-ignore
     if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
-      // prettier-ignore
-      amountForDiscount = ((price * quantity) * discount)
+      amountForDiscount = total * discount
     } else {
       // prettier-ignore
       amountForDiscount = discount
@@ -83,36 +85,50 @@
     return amountForDiscount;
   }
 
-  function calculateTax(quotationDetail, quotationDetailID) {
-    const invoiceDetailObject = quotationDetail.find(
-      (e) => e.id === quotationDetailID
-    );
-    // prettier-ignore
-    return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
-  }
+  //   function calculateTax(quotationDetail, quotationDetailID) {
+  //     const invoiceDetailObject = quotationDetail.find(
+  //       (e) => e.id === quotationDetailID
+  //     );
+  //     // prettier-ignore
+  //     return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
+  //   }
 
   function calculateAmount(quotationDetail, quotationDetailID) {
     const invoiceDetailObject = quotationDetail.find(
       (e) => e.id === quotationDetailID
     );
 
-    return (
-      calculateTax(quotationDetail, quotationDetailID) +
-      (invoiceDetailObject.price * invoiceDetailObject.quantity -
-        calculateDiscount(
-          invoiceDetailObject.price,
-          invoiceDetailObject.quantity,
-          invoiceDetailObject.discount
-        ))
-    );
+    return invoiceDetailObject.price * invoiceDetailObject.quantity;
   }
 
-  function calculateTotalAmount(quotationDetails) {
+  function calculateTotal(quotationDetails, generalDiscount) {
     let sumAmounts = 0;
     quotationDetails.map((e) => {
       sumAmounts += calculateAmount(quotationDetails, e.id);
     });
-    return sumAmounts;
+    return sumAmounts - calculateDiscount(sumAmounts, generalDiscount);
+  }
+
+  function printQuotationA4(quotationID, status) {
+    if (status) {
+      window.open(
+        urls.backendRoute +
+          urls.printQuotationEndpoint +
+          `?quotation_header_id=${quotationID}&papel_size="A4"`,
+        "_blank"
+      );
+    }
+  }
+
+  function printQuotation60mm(quotationID, status) {
+    if (status) {
+      window.open(
+        urls.backendRoute +
+          urls.printQuotation60mmEndpoint +
+          `?quotation_header_id=${quotationID}&papel_size="60mm"`,
+        "_blank"
+      );
+    }
   }
 
   onMount(() => {
@@ -170,6 +186,7 @@
     <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Cot. No.</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Cliente</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Venta</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Total</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Fecha</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
@@ -184,16 +201,18 @@
         <TableBodyCell class="w-[10%] p-2">{quotation.number}</TableBodyCell>
 
         <TableBodyCell class={"w-[20%] p-2 text-center"}
-          >{quotation.customer?.name
-            ? quotation.customer?.name
-            : "N/A"}</TableBodyCell
+          >{quotation.customer?.name}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}
+          >{$salesTypes.find((e) => e.id === quotation?.sales_type)
+            ?.name}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
           >{new Intl.NumberFormat("es-DO", {
             style: "currency",
             currency: "DOP",
           }).format(
-            calculateTotalAmount(quotation.quotation_detail)
+            calculateTotal(quotation.quotation_detail, quotation.discount)
           )}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
@@ -207,11 +226,26 @@
           ></TableBodyCell
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}>
-          <A
-            class="!text-amber-500 hover:!text-amber-600"
-            on:click={() => navigateTo("/quotation_form/" + quotation.id)}
-            >Editar</A
-          >
+          <div class="flex justify-center">
+            <DotsHorizontalOutline />
+            <Dropdown>
+              <DropdownItem
+                on:click={() => navigateTo("/quotation_form/" + quotation.id)}
+              >
+                Editar</DropdownItem
+              >
+              <DropdownItem
+                on:click={() =>
+                  printQuotationA4(quotation.id, quotation.status)}
+                >Imprimir A4</DropdownItem
+              >
+              <DropdownItem
+                on:click={() =>
+                  printQuotation60mm(quotation.id, quotation.status)}
+                >Imprimir 60mm</DropdownItem
+              >
+            </Dropdown>
+          </div>
         </TableBodyCell>
       </TableBodyRow>
     {:else}

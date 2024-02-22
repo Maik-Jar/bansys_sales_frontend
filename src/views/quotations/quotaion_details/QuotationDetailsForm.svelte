@@ -1,8 +1,9 @@
 <script>
   import { isNumeric } from "../../../lib/utils/functions";
-  import { taxes, items } from "../../../lib/stores/stores";
+  import { items } from "../../../lib/stores/stores";
   import Swal from "sweetalert2";
   import { urls } from "../../../lib/utils/urls";
+  import { onMount } from "svelte";
   import MultiSelect from "svelte-multiselect";
   import {
     Table,
@@ -16,16 +17,13 @@
     ButtonGroup,
     InputAddon,
     Modal,
-    Spinner,
+    Textarea,
   } from "flowbite-svelte";
-  import { onMount } from "svelte";
 
-  export let quotationDetails = [];
+  export let quotationsDetails = [];
   export let quotationActive = true;
   export let activeQuotationDetails = false;
-  export let quotationDetailsToDelete = [];
-  export let quotationHeaderDiscont = 0.0;
-  export let totalAmount = 0;
+  export let quotationsDetailsToDelete = [];
   export const addQuotationDetailsAtSelectedItem = (quotation_details) => {
     quotation_details.map((e) => {
       const addItem = $items.find((i) => i.id == e?.item.id);
@@ -37,7 +35,6 @@
             id: addItem.id,
             name: addItem.name,
             price: addItem.price,
-            tax: addItem.tax,
           },
         },
       ];
@@ -45,38 +42,21 @@
   };
 
   let multiselectOptions;
-  //   let multiselectOptions = $items.map((e) => {
-  //     return {
-  //       label: e.name + " / " + e.price,
-  //       value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
-  //     };
-  //   });
   let selectedItems = [];
   let itemID;
   let counter = 0;
   let defaultModal = false;
   let quantityModal = false;
-  let discountModal = false;
-  let totalQuantity = 0;
-  let totalTax = 0;
-  let totalDiscount = 0;
   let rowDetail;
-  let tempQuantity;
-  let tempDiscount;
+  let descriptionModal = false;
+  let priceModal = false;
 
   const customColorsClassDark = {
     label: "dark:text-gray-500",
     input: "dark:bg-gray-50 dark:text-black",
   };
 
-  $: if (quotationDetails) {
-    calculateTotalTax();
-    calculateTotalQuantity();
-    calculateTotalAmount();
-    calulateTotalDiscount();
-  }
-
-  function getItems(page) {
+  function getItems() {
     const token = JSON.parse(localStorage.getItem("token"));
     fetch(urls.backendRoute + urls.itemsList, {
       method: "get",
@@ -90,7 +70,7 @@
           multiselectOptions = data.map((e) => {
             return {
               label: e.name + " / " + e.price,
-              value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
+              value: { id: e.id, name: e.name, price: e.price },
             };
           });
         } else {
@@ -103,78 +83,12 @@
       });
   }
 
-  function calculateDiscount(price, quantity, discount) {
-    let amountForDiscount = 0;
-    if (discount < 0 || discount == 0) {
-      return amountForDiscount;
-    }
-    // prettier-ignore
-    if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
-      // prettier-ignore
-      amountForDiscount = ((price * quantity) * discount)
-    } else {
-      // prettier-ignore
-      amountForDiscount = parseFloat(discount)
-    }
-
-    return amountForDiscount;
-  }
-
-  function calculateTax(quotationDetailID) {
-    const quotationDetailObject = quotationDetails.find(
-      (e) => e.id === quotationDetailID
-    );
-    // prettier-ignore
-    return ((quotationDetailObject.price * quotationDetailObject.quantity)-calculateDiscount(quotationDetailObject.price,quotationDetailObject.quantity,quotationDetailObject.discount)) * quotationDetailObject.tax;
-  }
-
   function calculateAmount(quotationDetailID) {
-    const quotationDetailObject = quotationDetails.find(
+    const quotationDetailObject = quotationsDetails.find(
       (e) => e.id === quotationDetailID
     );
 
-    return (
-      calculateTax(quotationDetailID) +
-      (quotationDetailObject.price * quotationDetailObject.quantity -
-        calculateDiscount(
-          quotationDetailObject.price,
-          quotationDetailObject.quantity,
-          quotationDetailObject.discount
-        ))
-    );
-  }
-
-  function calculateTotalQuantity() {
-    let sumQuantity = 0;
-    quotationDetails.map((e) => {
-      sumQuantity += e.quantity;
-    });
-    totalQuantity = sumQuantity;
-  }
-
-  function calculateTotalTax() {
-    let sumTaxes = 0;
-    quotationDetails.map((e) => {
-      sumTaxes += calculateTax(e.id);
-    });
-    totalTax = sumTaxes;
-  }
-
-  function calculateTotalAmount() {
-    let sumAmounts = 0;
-    quotationDetails.map((e) => {
-      sumAmounts += calculateAmount(e.id);
-    });
-    totalAmount = sumAmounts;
-  }
-
-  function calulateTotalDiscount() {
-    let sumDiscounts = 0;
-    quotationDetails.map((e) => {
-      sumDiscounts += calculateDiscount(e.price, e.quantity, e.discount);
-    });
-
-    totalDiscount = sumDiscounts;
+    return quotationDetailObject.price * quotationDetailObject.quantity;
   }
 
   function generateRowId() {
@@ -186,19 +100,14 @@
   function addRow(item) {
     if (Array.isArray(item)) {
       item.map((e) => {
-        if (!quotationDetails.find((i) => i.item.id == e.value.id)) {
+        if (!quotationsDetails.find((i) => i.item.id == e.value.id)) {
           let invoiceDetail = {
             id: generateRowId(),
             item: { id: e.value.id, name: e.value.name },
             quantity: 1,
             price: e.value.price,
-            tax: $taxes.find((i) => i.id == e.value.tax)?.percentage / 100,
-            discount:
-              quotationHeaderDiscont > 0 && quotationHeaderDiscont < 1
-                ? quotationHeaderDiscont
-                : 0,
           };
-          quotationDetails = [...quotationDetails, invoiceDetail];
+          quotationsDetails = [...quotationsDetails, invoiceDetail];
         }
       });
     } else {
@@ -211,13 +120,8 @@
             item: { id: insertItem.id, name: insertItem.name },
             quantity: 1,
             price: insertItem.price,
-            tax: $taxes.find((e) => insertItem.tax)?.percentage / 100,
-            discount:
-              quotationHeaderDiscont > 0 && quotationHeaderDiscont < 1
-                ? quotationHeaderDiscont
-                : 0,
           };
-          quotationDetails = [...quotationDetails, invoiceDetail];
+          quotationsDetails = [...quotationsDetails, invoiceDetail];
           const addItem = $items.find((e) => e.id == item);
           selectedItems = [
             ...selectedItems,
@@ -227,7 +131,6 @@
                 id: addItem.id,
                 name: addItem.name,
                 price: addItem.price,
-                tax: addItem.tax,
               },
             },
           ];
@@ -239,7 +142,7 @@
   }
 
   function validNotRepeatItem(item_id) {
-    const repeatItem = quotationDetails.find((e) => {
+    const repeatItem = quotationsDetails.find((e) => {
       if (e.item.id == item_id) {
         return e;
       }
@@ -251,52 +154,69 @@
     return true;
   }
 
-  function updateQuantity(rowId, value) {
-    quotationDetails = quotationDetails.map((e, index) => {
-      if (e.id === rowId) {
-        e.quantity = value ? Number(value) : 1;
+  function updateQuantity(e, rowId) {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+
+    quotationsDetails = quotationsDetails.map((el, index) => {
+      if (el.id === rowId) {
+        el.quantity = Number(data.quantity) > 0 ? Number(data.quantity) : 1;
       }
-      return e;
+      return el;
     });
+
+    quantityModal = false;
   }
 
-  function updateDiscount(rowId, value) {
-    if (!value) {
-      return;
-    }
-    quotationDetails = quotationDetails.map((e) => {
-      if (e.id === rowId) {
-        e.discount = Number.parseFloat(value);
+  function updateDescription(e, rowId) {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+
+    quotationsDetails = quotationsDetails.map((el, index) => {
+      if (el.id === rowId) {
+        el.description = data.description;
       }
-      return e;
+      return el;
     });
-    quotationHeaderDiscont = 0;
+
+    descriptionModal = false;
+  }
+
+  function updatePrice(e, rowId) {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    quotationsDetails = quotationsDetails.map((el, index) => {
+      if (el.id === rowId) {
+        el.price = Number(data.price) > 0 ? Number(data.price) : el.price;
+      }
+      return el;
+    });
+
+    priceModal = false;
   }
 
   function deleteRow(rowId, all = false) {
     if (all) {
-      quotationHeaderDiscont = 0;
-
-      quotationDetails.filter((e) => {
+      quotationsDetails.filter((e) => {
         if (isNumeric(e.id)) {
-          quotationDetailsToDelete = [...quotationDetailsToDelete, e];
+          quotationsDetailsToDelete = [...quotationsDetailsToDelete, e];
         }
       });
 
-      quotationDetails = [];
+      quotationsDetails = [];
     }
 
     if (typeof rowId === "object") {
-      quotationDetails = quotationDetails.filter((e) => {
+      quotationsDetails = quotationsDetails.filter((e) => {
         if (e?.item.id !== rowId?.value.id) {
           return e;
         }
         if (isNumeric(e.id)) {
-          quotationDetailsToDelete = [...quotationDetailsToDelete, e];
+          quotationsDetailsToDelete = [...quotationsDetailsToDelete, e];
         }
       });
     } else {
-      quotationDetails = quotationDetails.filter((e) => {
+      quotationsDetails = quotationsDetails.filter((e) => {
         if (e.id == rowId) {
           selectedItems = selectedItems.filter((i) => {
             if (i.value.id !== e.item.id) {
@@ -310,26 +230,34 @@
         }
 
         if (isNumeric(e.id)) {
-          quotationDetailsToDelete = [...quotationDetailsToDelete, e];
+          quotationsDetailsToDelete = [...quotationsDetailsToDelete, e];
         }
       });
-    }
-    // prettier-ignore
-    if (!(quotationHeaderDiscont > 0 && quotationHeaderDiscont < 1)){
-        quotationDetails.map(e => {
-            e.discount = quotationHeaderDiscont/quotationDetails.length
-        })
     }
   }
 
   function openQuantityModal(rowId) {
-    rowDetail = quotationDetails.find((e) => e.id === rowId);
+    rowDetail = quotationsDetails.find((e) => e.id === rowId);
     quantityModal = true;
   }
 
-  function openDiscountModal(rowId) {
-    rowDetail = quotationDetails.find((e) => e.id === rowId);
-    discountModal = true;
+  function openDescriptionModal(rowId) {
+    rowDetail = quotationsDetails.find((e) => e.id === rowId);
+    descriptionModal = true;
+  }
+
+  function openPriceModal(rowId) {
+    rowDetail = quotationsDetails.find((e) => e.id === rowId);
+    priceModal = true;
+  }
+
+  function hasDescription(rowId) {
+    let row = quotationsDetails.find((e) => e.id === rowId);
+    if (row?.description?.length > 0) {
+      return true;
+    }
+
+    return false;
   }
 
   onMount(() => {
@@ -365,13 +293,10 @@
     disabled={!activeQuotationDetails || !quotationActive}>Agregar</Button
   >
 </form>
-<!-- <div
-  class="h-[25rem] relative overflow-y-auto shadow-xl bg-white rounded-xl border-2 border-gray-300 mb-5"
-> -->
 <Table
   hoverable={true}
   shadow
-  divClass={"relative h-[25rem] overflow-y-auto mb-5"}
+  divClass={"relative h-[25rem] overflow-y-auto mb-5 bg-white"}
 >
   <TableHead class={"sticky top-0 w-full"}>
     <TableHeadCell padding={"px-3 py-3"} class="text-center">#</TableHeadCell>
@@ -383,11 +308,6 @@
     <TableHeadCell padding={"px-3 py-3"} class="text-center"
       >Cant.</TableHeadCell
     >
-    <TableHeadCell padding={"px-3 py-3"} class="text-center">Imp.</TableHeadCell
-    >
-    <TableHeadCell padding={"px-3 py-3"} class="text-center"
-      >Descto.</TableHeadCell
-    >
     <TableHeadCell padding={"px-3 py-3"} class="text-center"
       >Monto</TableHeadCell
     >
@@ -396,13 +316,19 @@
     >
   </TableHead>
   <TableBody tableBodyClass="divide-y">
-    {#each quotationDetails as quotationDetail, i}
+    {#each quotationsDetails as quotationDetail, i}
       <TableBodyRow>
         <TableBodyCell class="text-center py-1 px-3">{i + 1}</TableBodyCell>
-        <TableBodyCell class=" py-1 px-3"
+        <TableBodyCell
+          class="py-1 px-3 cursor-pointer {hasDescription(quotationDetail.id)
+            ? 'text-green-400 dark:text-green-400'
+            : 'text-white'}"
+          on:click={() => openDescriptionModal(quotationDetail.id)}
           >{quotationDetail.item.name}</TableBodyCell
         >
-        <TableBodyCell class="text-center py-1 px-3"
+        <TableBodyCell
+          class="text-center py-1 px-3 cursor-pointer"
+          on:click={() => openPriceModal(quotationDetail.id)}
           >{new Intl.NumberFormat("es-DO").format(
             quotationDetail.price
           )}</TableBodyCell
@@ -412,36 +338,6 @@
           on:click={() => openQuantityModal(quotationDetail.id)}
         >
           {quotationDetail.quantity}
-          <!-- <Input
-            size="sm"
-            type="number"
-            class="m-0 {customColorsClassDark.input}"
-            value={invoiceDetail.quantity}
-            on:input={(e) => updateQuantity(invoiceDetail.id, e.target)}
-            required
-            disabled={!quotationActive}
-          /> -->
-        </TableBodyCell>
-        <TableBodyCell class="text-center py-1 px-3">
-          {new Intl.NumberFormat("es-DO").format(
-            calculateTax(quotationDetail.id)
-          )}</TableBodyCell
-        >
-        <TableBodyCell
-          class="text-center py-1 px-3 cursor-pointer"
-          on:click={() => openDiscountModal(quotationDetail.id)}
-        >
-          {new Intl.NumberFormat("es-DO").format(quotationDetail.discount)}
-          <!-- <Input
-            size="sm"
-            type="number"
-            step="any"
-            class="m-0 {customColorsClassDark.input}"
-            value={invoiceDetail.discount}
-            on:blur={(e) => updateDiscount(invoiceDetail.id, e.target)}
-            required
-            disabled={!quotationActive}
-          /> -->
         </TableBodyCell>
         <TableBodyCell class="text-center py-1 px-3">
           {new Intl.NumberFormat("es-DO").format(
@@ -472,57 +368,26 @@
       </TableBodyRow>
     {:else}
       <TableBodyRow>
-        <TableBodyCell colspan="8" class="text-center "
+        <TableBodyCell colspan="6" class="text-center "
           >No hay items</TableBodyCell
         >
       </TableBodyRow>
     {/each}
   </TableBody>
-  <tfoot class="sticky bottom-0">
-    <tr class="font-semibold text-gray-900 dark:text-white dark:bg-gray-700">
-      <th colspan="2" scope="row" class="py-3 px-6 text-left">Total</th>
-      <th />
-      <td class="py-3 px-6 text-center">{totalQuantity}</td>
-      <td class="py-3 px-6 text-center"
-        >{new Intl.NumberFormat("es-DO", {
-          style: "currency",
-          currency: "DOP",
-        }).format(totalTax)}</td
-      >
-      <td class="py-1 px-6 text-center flex-1">
-        {new Intl.NumberFormat("es-DO", {
-          style: "currency",
-          currency: "DOP",
-        }).format(totalDiscount)}
-      </td>
-      <td class="py-3 px-6 text-center"
-        >{new Intl.NumberFormat("es-DO", {
-          style: "currency",
-          currency: "DOP",
-        }).format(totalAmount)}</td
-      >
-      <td class="py-3 px-6" />
-    </tr>
-  </tfoot>
 </Table>
-<!-- </div> -->
 
 <Modal title="Busqueda avanzada de items" bind:open={defaultModal} autoclose>
   <div class="h-[25rem]">
-    {#await multiselectOptions}
-      <Spinner />
-    {:then response}
-      <MultiSelect
-        outerDivClass=" h-20"
-        liOptionClass="dark:text-black"
-        ulSelectedClass=" h-20"
-        bind:selected={selectedItems}
-        options={multiselectOptions}
-        on:add={() => addRow(selectedItems)}
-        on:remove={(e) => deleteRow(e?.detail.option)}
-        on:removeAll={(e) => deleteRow(undefined, true)}
-      />
-    {/await}
+    <MultiSelect
+      outerDivClass=" h-20"
+      liOptionClass="dark:text-black"
+      ulSelectedClass=" h-20"
+      bind:selected={selectedItems}
+      options={multiselectOptions}
+      on:add={() => addRow(selectedItems)}
+      on:remove={(e) => deleteRow(e?.detail.option)}
+      on:removeAll={(e) => deleteRow(undefined, true)}
+    />
   </div>
   <svelte:fragment slot="footer">
     <Button color="red">Cerrar</Button>
@@ -533,59 +398,85 @@
   title="Cantidad del item: {rowDetail?.item.name}"
   bind:open={quantityModal}
   size="sm"
+  autoclose={false}
 >
   <form
     id="form_quantity"
-    on:submit|preventDefault|stopPropagation={() =>
-      updateQuantity(rowDetail.id, tempQuantity?.value)}
+    on:submit|preventDefault|stopPropagation={(e) =>
+      updateQuantity(e, rowDetail.id)}
   >
     <Input
       type="number"
+      name="quantity"
       class="m-0 {customColorsClassDark.input}"
       value={rowDetail.quantity}
-      on:input={(e) => (tempQuantity = e.target)}
       required
       disabled={!quotationActive}
     />
   </form>
   <svelte:fragment slot="footer">
-    <Button
-      type="submit"
-      form="form_quantity"
-      color="green"
-      on:click={() => (quantityModal = false)}>Aplicar</Button
+    <Button type="submit" form="form_quantity" color="green">Aplicar</Button>
+    <Button color="alternative" on:click={() => (quantityModal = false)}
+      >Cerrar</Button
     >
-    <Button color="red" on:click={() => (quantityModal = false)}>Cerrar</Button>
   </svelte:fragment>
 </Modal>
 
 <Modal
-  title="Descuento al item: {rowDetail?.item.name}"
-  bind:open={discountModal}
+  title="Descripción del item: {rowDetail?.item.name}"
+  bind:open={descriptionModal}
   size="sm"
+  autoclose={false}
 >
   <form
-    id="form_discount"
-    on:submit|preventDefault|stopPropagation={() =>
-      updateDiscount(rowDetail.id, tempDiscount?.value)}
+    id="form_description"
+    on:submit|preventDefault|stopPropagation={(e) =>
+      updateDescription(e, rowDetail.id)}
   >
-    <Input
-      type="number"
-      step="0.01"
-      class="m-0 {customColorsClassDark.input}"
-      value={rowDetail.discount}
-      on:input={(e) => (tempDiscount = e.target)}
-      required
+    <Textarea
+      class={customColorsClassDark.input}
+      name="description"
+      rows="9"
+      bind:value={rowDetail.description}
       disabled={!quotationActive}
     />
   </form>
   <svelte:fragment slot="footer">
-    <Button
-      type="submit"
-      form="form_discount"
-      color="green"
-      on:click={() => (discountModal = false)}>Aplicar</Button
+    <Button type="submit" form="form_description" color="green">Aplicar</Button>
+    <Button color="alternative" on:click={() => (descriptionModal = false)}
+      >Cerrar</Button
     >
-    <Button color="red" on:click={() => (discountModal = false)}>Cerrar</Button>
+  </svelte:fragment>
+</Modal>
+
+<Modal
+  title="Precio Und. del item: {rowDetail?.item.name}"
+  bind:open={priceModal}
+  size="sm"
+  autoclose={false}
+>
+  <form
+    id="form_price"
+    on:submit|preventDefault|stopPropagation={(e) =>
+      updatePrice(e, rowDetail.id)}
+  >
+    <ButtonGroup class="w-full">
+      <InputAddon>DOP$</InputAddon>
+      <Input
+        type="number"
+        step="any"
+        name="price"
+        class={customColorsClassDark.input}
+        value={rowDetail.price}
+        required
+        disabled={!quotationActive}
+      />
+    </ButtonGroup>
+  </form>
+  <svelte:fragment slot="footer">
+    <Button type="submit" form="form_price" color="green">Aplicar</Button>
+    <Button color="alternative" on:click={() => (priceModal = false)}
+      >Cerrar</Button
+    >
   </svelte:fragment>
 </Modal>

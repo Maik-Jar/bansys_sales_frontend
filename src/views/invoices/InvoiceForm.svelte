@@ -74,6 +74,7 @@
   $: activeInvoiceDetails = customer?.id ? true : false;
   $: if (invoiceDetails) {
     calculateSubtotal();
+    calculateDiscount();
     calculateTax();
     calculateTotal();
     calculatePending();
@@ -105,10 +106,10 @@
           if (res.ok) {
             const data = await res.json();
             //customer
-            customer.id = await data.customer?.id;
+            customer.id = data.customer?.id;
             customer.name = data.customer?.name;
             //invoice_details
-            invoiceDetails = await data.invoice_detail;
+            invoiceDetails = data.invoice_detail;
             //payments
             payments = data.payment;
             //receipt_sequence
@@ -183,6 +184,7 @@
                 data.date_updated
               ).toLocaleString("es-DO");
               invoiceHeader.user_created = data.user_created;
+              invoiceDetails = data?.invoice_detail;
 
               Swal.fire("¡Nueva factura creada!", "", "success");
               isEditable = true;
@@ -237,6 +239,7 @@
             if (res.ok) {
               const data = await res.json();
               invoiceHeader.date_updated = data.date_updated;
+              invoiceDetails = data?.invoice_detail;
               Swal.fire("¡Datos guardados!", "", "success");
             } else {
               const message = await res.json();
@@ -292,29 +295,6 @@
       } else if (result.isDenied) {
         Swal.fire("Operación descartada.", "", "info");
       }
-    });
-  }
-
-  function appliyGeneralDiscount() {
-    let discountPerDetail = 0;
-
-    invoiceDetails = invoiceDetails.map((e) => {
-      e.discount = 0;
-      return e;
-    });
-
-    if (invoiceHeader.discount < 0) {
-      return;
-    }
-
-    discountPerDetail =
-      invoiceHeader.discount > 0 && invoiceHeader.discount < 1
-        ? invoiceHeader.discount
-        : invoiceHeader.discount / invoiceDetails.length;
-
-    invoiceDetails = invoiceDetails.map((e) => {
-      e.discount = discountPerDetail;
-      return e;
     });
   }
 

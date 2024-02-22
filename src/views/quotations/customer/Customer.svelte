@@ -17,32 +17,38 @@
 
   export let customer;
   export let quotationActive;
-  //   export const getCustomerForId = () => {
-  //     const token = JSON.parse(localStorage.getItem("token"));
-  //     fetch(
-  //       urls.backendRoute +
-  //         urls.customersEndPoint +
-  //         `?customer_id=${customer.id}`,
-  //       {
-  //         method: "get",
-  //         headers: {
-  //           Authorization: `Token ${token.token}`,
-  //         },
-  //       }
-  //     )
-  //       .then(async (res) => {
-  //         if (res.ok) {
-  //           const data = await res.json();
-  //           dataCustomer = data;
-  //         } else {
-  //           const data = await res.json();
-  //           console.log(data);
-  //         }
-  //       })
-  //       .catch((error) => {
-  //         console.log(error.message);
-  //       });
-  //   };
+  export const getCustomerForId = () => {
+    const token = JSON.parse(localStorage.getItem("token"));
+    fetch(
+      urls.backendRoute +
+        urls.customersEndPoint +
+        `?customer_id=${customer.id}`,
+      {
+        method: "get",
+        headers: {
+          Authorization: `Token ${token.token}`,
+        },
+      }
+    )
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          dataCustomer = data;
+        } else {
+          const data = await res.json();
+          console.log(data);
+        }
+      })
+      .catch((error) => {
+        console.log(error.message);
+      });
+  };
+  export let dataCustomer = {
+    id: null,
+    name: "",
+    document_id: "",
+    phone: "",
+  };
 
   const customColorsClassDark = {
     label: "dark:text-gray-500",
@@ -54,8 +60,7 @@
 
   function getCustomer() {
     const dataToSearch =
-      customer.document_id || customer.name || customer.phone;
-
+      dataCustomer.document_id || dataCustomer.name || dataCustomer.phone;
     const token = JSON.parse(localStorage.getItem("token"));
     fetch(
       urls.backendRoute + urls.customersEndPoint + `?search=${dataToSearch}`,
@@ -80,10 +85,9 @@
                 "error"
               );
             } else {
-              customer.id = customersObject[0]?.id;
-              customer.name = customersObject[0]?.name;
-              customer.document_id = customersObject[0]?.document_id;
-              customer.phone = customersObject[0]?.phone;
+              dataCustomer = customersObject[0];
+              customer.id = dataCustomer?.id;
+              customer.name = dataCustomer?.name;
             }
           }
         } else {
@@ -98,11 +102,9 @@
 
   function addSelected(customerId) {
     const customerSelected = customersObject.find((e) => e.id == customerId);
-
+    dataCustomer = customerSelected;
     customer.id = customerSelected.id;
     customer.name = customerSelected.name;
-    customer.document_id = customerSelected.document_id;
-    customer.phone = customerSelected.phone;
   }
 </script>
 
@@ -117,12 +119,13 @@
     <Input
       id="customer"
       class="capitalize {customColorsClassDark.input}"
-      bind:value={customer.name}
+      bind:value={dataCustomer.name}
       disabled={!quotationActive}
       on:input={(e) => {
+        dataCustomer.phone = "";
+        dataCustomer.document_id = "";
         customer.id = null;
-        customer.phone = "";
-        customer.document_id = "";
+        customer.name = null;
       }}
     />
   </div>
@@ -135,12 +138,13 @@
       <Input
         id="customerDocumentID"
         class={customColorsClassDark.input}
-        bind:value={customer.document_id}
+        bind:value={dataCustomer.document_id}
         disabled={!quotationActive}
         on:input={(e) => {
+          dataCustomer.phone = "";
+          dataCustomer.name = "";
           customer.id = null;
-          customer.phone = "";
-          customer.name = "";
+          customer.name = null;
         }}
       />
     </div>
@@ -152,12 +156,13 @@
       <Input
         id="customerContac"
         class={customColorsClassDark.input}
-        bind:value={customer.phone}
+        bind:value={dataCustomer.phone}
         disabled={!quotationActive}
         on:input={(e) => {
+          dataCustomer.name = "";
+          dataCustomer.document_id = "";
           customer.id = null;
-          customer.name = "";
-          customer.document_id = "";
+          customer.name = null;
         }}
       />
     </div>

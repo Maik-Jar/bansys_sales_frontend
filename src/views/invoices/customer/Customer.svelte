@@ -102,10 +102,9 @@
 
   function addSelected(customerId) {
     const customerSelected = customersObject.find((e) => e.id == customerId);
-
     dataCustomer = customerSelected;
-    customer.id = dataCustomer.id;
-    customer.name = dataCustomer.name;
+    customer.id = customerSelected.id;
+    customer.name = customerSelected.name;
   }
 </script>
 

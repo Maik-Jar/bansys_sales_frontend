@@ -14,7 +14,6 @@
     TableHeadCell,
     PaginationItem,
     Search,
-    A,
     Badge,
     Dropdown,
     DropdownItem,
@@ -77,8 +76,7 @@
     }
     // prettier-ignore
     if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
-      // prettier-ignore
-      amountForDiscount = (total * discount)
+      amountForDiscount = total * discount
     } else {
       // prettier-ignore
       amountForDiscount = discount
@@ -256,7 +254,7 @@
       </TableBodyRow>
     {:else}
       <TableBodyRow>
-        <TableBodyCell colspan="8" class={" text-center"}
+        <TableBodyCell colspan="9" class={" text-center"}
           >NO HAY DATOS</TableBodyCell
         >
       </TableBodyRow>

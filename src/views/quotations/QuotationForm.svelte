@@ -3,7 +3,7 @@
   import Swal from "sweetalert2";
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
-  import { salesTypes } from "../../lib/stores/stores";
+  import { salesTypes, taxes } from "../../lib/stores/stores";
   import QuotationDetailsForm from "./quotaion_details/QuotationDetailsForm.svelte";
   import Customer from "./customer/Customer.svelte";
   import { hasPermission } from "../../lib/utils/functions";
@@ -18,7 +18,11 @@
     Textarea,
     Badge,
     Span,
+    Dropdown,
+    DropdownItem,
+    Modal,
   } from "flowbite-svelte";
+  import { ChevronDownSolid } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
@@ -30,6 +34,7 @@
     id: null,
     number: null,
     discount: 0.0,
+    tax: 0.0,
     sales_type: 1,
     comment: null,
     date_created: null,
@@ -41,18 +46,41 @@
 
   let customer = Object.seal({
     id: null,
-    name: "",
-    document_id: "",
-    phone: "",
+    name: null,
   });
   let quotationsDetails = [];
   let quotationsDetailsToDelete = [];
-  let isEditable = false;
-  let totalAmount = 0;
-  //   let getCustomerForIdonChild;
-  let addQuotationDetailsAtSelectedItem;
 
-  $: activeQuotationDetails = customer?.name ? true : false;
+  let isEditable = false;
+  let subTotal = 0;
+  let totalTax = 0;
+  let totalDiscoint = 0;
+  let totalAmount = 0;
+  let getCustomerForIdonChild;
+  let addQuotationDetailsAtSelectedItem;
+  let discountModal = false;
+
+  $: activeQuotationDetails = customer?.id ? true : false;
+  $: if (quotationsDetails) {
+    calculateSubtotal();
+    calculateDiscount();
+    calculateTax();
+    calculateTotal();
+  }
+  $: {
+    quotationHeader.discount = quotationHeader.discount
+      ? quotationHeader.discount
+      : 0.0;
+    calculateDiscount();
+    calculateTax();
+    calculateTotal();
+  }
+  $: {
+    quotationHeader.tax = quotationHeader.tax ? quotationHeader.tax : 0.0;
+    calculateDiscount();
+    calculateTax();
+    calculateTotal();
+  }
 
   function getQuotation() {
     if (isEditable) {
@@ -71,16 +99,15 @@
           if (res.ok) {
             const data = await res.json();
             //customer
-            customer.id = await data.customer?.id;
+            customer.id = data.customer?.id;
             customer.name = data.customer?.name;
-            customer.document_id = data.customer?.document_id;
-            customer.phone = data.customer?.phone;
             //quotation_details
-            quotationsDetails = await data.quotation_detail;
+            quotationsDetails = data.quotation_detail;
             //quotation_header
             quotationHeader.id = data.id;
             quotationHeader.number = data.number;
             quotationHeader.discount = data.discount;
+            quotationHeader.tax = data.tax;
             quotationHeader.sales_type = data.sales_type;
             quotationHeader.comment = data.comment;
             quotationHeader.date_created = new Date(
@@ -93,7 +120,7 @@
             quotationHeader.user_updated = data.user_updated;
             quotationHeader.status = data.status;
 
-            // getCustomerForIdonChild();
+            getCustomerForIdonChild();
             addQuotationDetailsAtSelectedItem(quotationsDetails);
           }
         })
@@ -194,7 +221,6 @@
             if (res.ok) {
               const data = await res.json();
               quotationHeader.date_updated = data.date_updated;
-              console.log(data?.quotation_detail);
               quotationsDetails = data?.quotation_detail;
               Swal.fire("¡Datos guardados!", "", "success");
             } else {
@@ -254,27 +280,33 @@
     });
   }
 
-  function appliyGeneralDiscount() {
-    let discountPerDetail = 0;
+  function calculateSubtotal() {
+    subTotal = 0;
+    quotationsDetails.map((e) => (subTotal += e.quantity * e.price));
+  }
 
-    quotationsDetails = quotationsDetails.map((e) => {
-      e.discount = 0;
-      return e;
-    });
-
-    if (quotationHeader.discount < 0) {
-      return;
+  function calculateDiscount() {
+    totalDiscoint = 0;
+    if (quotationHeader.discount < 0 || quotationHeader.discount == 0) {
+      return totalDiscoint;
     }
+    // prettier-ignore
+    if (!Number.isInteger(quotationHeader.discount) && (quotationHeader.discount > 0 && quotationHeader.discount < 1)) {
+        totalDiscoint = (subTotal * quotationHeader.discount)
+      } else {
+        totalDiscoint = quotationHeader.discount ? quotationHeader.discount : 0.00
+      }
+  }
 
-    discountPerDetail =
-      quotationHeader.discount > 0 && quotationHeader.discount < 1
-        ? quotationHeader.discount
-        : quotationHeader.discount / quotationsDetails.length;
+  function calculateTax() {
+    totalTax = 0;
 
-    quotationsDetails = quotationsDetails.map((e) => {
-      e.discount = discountPerDetail;
-      return e;
-    });
+    totalTax = (subTotal - totalDiscoint) * quotationHeader.tax;
+  }
+
+  function calculateTotal() {
+    totalAmount = 0;
+    totalAmount = subTotal - totalDiscoint + totalTax;
   }
 
   function validateCustomer() {
@@ -322,6 +354,17 @@
         urls.backendRoute +
           urls.printQuotationEndpoint +
           `?quotation_header_id=${quotationID}&papel_size="A4"`,
+        "_blank"
+      );
+    }
+  }
+
+  function printQuotation60mm(quotationID) {
+    if (quotationHeader.status) {
+      window.open(
+        urls.backendRoute +
+          urls.printQuotation60mmEndpoint +
+          `?quotation_header_id=${quotationID}&papel_size="A60mm"`,
         "_blank"
       );
     }
@@ -384,27 +427,42 @@
     <div
       class="flex flex-col rounded-lg border-2 border-gray-500 row-span-3 shadow-lg p-2"
     >
-      <Customer bind:customer quotationActive={quotationHeader.status} />
+      <Customer
+        bind:customer
+        bind:getCustomerForId={getCustomerForIdonChild}
+        quotationActive={quotationHeader.status}
+      />
     </div>
-    <Heading tag="h5" class=" {customColorsClassDark.label}"
+    <Heading tag="h5" class={customColorsClassDark.label}
       >Estatus cotización: <Badge
         large
         color={quotationHeader.status ? "green" : "red"}
         >{quotationHeader.status ? "Activo" : "Inactivo"}</Badge
       ></Heading
     >
+    <Label class={customColorsClassDark.label}>
+      Impuesto
+      <Select
+        class="mt-2 {customColorsClassDark.input}"
+        bind:value={quotationHeader.tax}
+        required={quotationHeader.status}
+        disabled={!quotationHeader.status}
+      >
+        {#each $taxes as { percentage, name }}
+          <option value={percentage}>{name}</option>
+        {/each}
+      </Select>
+    </Label>
   </div>
   <QuotationDetailsForm
-    bind:quotationDetails={quotationsDetails}
-    bind:quotationDetailsToDelete={quotationsDetailsToDelete}
-    bind:totalAmount
+    bind:quotationsDetails
     bind:addQuotationDetailsAtSelectedItem
-    bind:quotationHeaderDiscont={quotationHeader.discount}
+    bind:quotationsDetailsToDelete
     quotationActive={quotationHeader.status}
     {activeQuotationDetails}
   />
-  <div class="grid grid-cols-4 gap-4">
-    <div class="col-start-1 col-span-2 2xl:col-span-1 row-span-3">
+  <div class="grid grid-cols-2 gap-5">
+    <div class="max-w-full">
       <Label for="textarea-id" class="mb-2 {customColorsClassDark.label}"
         >Comentarios</Label
       >
@@ -417,37 +475,79 @@
         disabled={!quotationHeader.status}
       />
     </div>
-    <div class="col-start-4">
-      <Label for="price" class="mb-2 {customColorsClassDark.label}"
-        >Descuento General</Label
-      >
-      <ButtonGroup class="w-full">
-        <InputAddon>DOP$</InputAddon>
-        <Input
-          id="price"
-          step="any"
-          class={customColorsClassDark.input}
-          type="number"
-          bind:value={quotationHeader.discount}
-          on:blur={appliyGeneralDiscount}
+    <div class="flex flex-col space-y-3 justify-self-end min-w-[70%]">
+      <Label class="{customColorsClassDark.label} col-start-4"
+        >Tipo de venta
+        <Select
+          class="mt-2 {customColorsClassDark.input}"
+          bind:value={quotationHeader.sales_type}
           required={quotationHeader.status}
           disabled={!quotationHeader.status}
-        />
-      </ButtonGroup>
+        >
+          {#each $salesTypes as { id, name }}
+            <option value={id}>{name}</option>
+          {/each}
+        </Select>
+      </Label>
+      <div class="flex justify-center space-x-3">
+        <Button
+          color="green"
+          class="min-w-[49%]"
+          on:click={() => (discountModal = true)}>Aplicar Descuento</Button
+        >
+      </div>
+      <div class="bg-white border-2 border-gray-300 shadow-lg p-5 rounded-lg">
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Subtotal:
+          </Heading>
+          <Span highlight class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(subTotal)}</Span
+          >
+        </div>
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Descuento:
+          </Heading>
+          <Span highlight class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(totalDiscoint)}</Span
+          >
+        </div>
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Impuesto:
+          </Heading>
+          <Span highlight class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(totalTax)}</Span
+          >
+        </div>
+        <hr class="my-2 bg-gray-400 h-1" />
+        <div class="flex justify-between">
+          <Heading tag="h4" class=" {customColorsClassDark.label}"
+            >Total:
+          </Heading>
+          <Span
+            highlight
+            highlightClass="text-red-600 dark:text-red-500"
+            class="text-2xl text-end"
+            >{Intl.NumberFormat("es-DO", {
+              style: "currency",
+              currency: "DOP",
+            }).format(totalAmount)}</Span
+          >
+        </div>
+        <hr class="my-2 bg-gray-400 h-1" />
+      </div>
     </div>
-    <Label class="{customColorsClassDark.label} col-start-4"
-      >Tipo de venta
-      <Select
-        class="mt-2 {customColorsClassDark.input}"
-        bind:value={quotationHeader.sales_type}
-        required={quotationHeader.status}
-        disabled={!quotationHeader.status}
-      >
-        {#each $salesTypes as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
-      </Select>
-    </Label>
   </div>
 </form>
 <div class="flex space-x-3 mt-5">
@@ -474,7 +574,41 @@
   <Button
     color="blue"
     type="button"
-    on:click={() => printQuotation(quotationHeader.id)}
-    disabled={!quotationHeader.status || !quotationHeader.id}>Imprimir</Button
+    disabled={!quotationHeader.status || !quotationHeader.id}
+    >Imprimir<ChevronDownSolid
+      class="w-3 h-3 ms-2 text-white dark:text-white"
+    /></Button
   >
+  <Dropdown>
+    <DropdownItem on:click={() => printQuotation(quotationHeader.id)}
+      >A4</DropdownItem
+    >
+    <DropdownItem on:click={() => printQuotation60mm(quotationHeader.id)}
+      >60mm</DropdownItem
+    >
+  </Dropdown>
 </div>
+
+<!-- modals -->
+<Modal title="Aplicar descuentos" bind:open={discountModal} autoclose>
+  <div>
+    <Label for="price" class="mb-2 {customColorsClassDark.label}"
+      >Descuento General</Label
+    >
+    <ButtonGroup class="w-full">
+      <InputAddon>DOP$</InputAddon>
+      <Input
+        id="price"
+        step="any"
+        class={customColorsClassDark.input}
+        type="number"
+        bind:value={quotationHeader.discount}
+        required={quotationHeader.status}
+        disabled={!quotationHeader.status}
+      />
+    </ButtonGroup>
+  </div>
+  <svelte:fragment slot="footer">
+    <Button color="alternative">Cerrar</Button>
+  </svelte:fragment>
+</Modal>

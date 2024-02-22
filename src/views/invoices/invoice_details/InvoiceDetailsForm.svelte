@@ -17,13 +17,13 @@
     ButtonGroup,
     InputAddon,
     Modal,
+    Textarea,
   } from "flowbite-svelte";
 
   export let invoiceDetails = [];
   export let invoiceActive = true;
   export let activeInvoiceDetails = false;
   export let invoiceDetailsToDelete = [];
-  export let invoiceHeaderDiscont = 0.0;
   export let calculateChange;
   export const addInvoiceDetailsAtSelectedItem = (invoice_details) => {
     invoice_details.map((e) => {
@@ -36,31 +36,20 @@
             id: addItem.id,
             name: addItem.name,
             price: addItem.price,
-            tax: addItem.tax,
           },
         },
       ];
     });
   };
   let multiselectOptions;
-  //   let multiselectOptions = $items.map((e) => {
-  //     return {
-  //       label: e.name + " / " + e.price,
-  //       value: { id: e.id, name: e.name, price: e.price, tax: e.tax },
-  //     };
-  //   });
   let selectedItems = [];
   let itemID;
   let counter = 0;
   let defaultModal = false;
   let quantityModal = false;
-  //   let discountModal = false;
-  //   let totalQuantity = 0;
-  //   let totalTax = 0;
-  //   let totalDiscount = 0;
   let rowDetail;
-  let tempQuantity;
-  //   let tempDiscount;
+  let descriptionModal = false;
+  let priceModal = false;
 
   const customColorsClassDark = {
     label: "dark:text-gray-500",
@@ -68,14 +57,10 @@
   };
 
   $: if (invoiceDetails) {
-    // calculateTotalTax();
-    // calculateTotalQuantity();
-    // calculateTotalAmount();
-    // calulateTotalDiscount();
     calculateChange();
   }
 
-  function getItems(page) {
+  function getItems() {
     const token = JSON.parse(localStorage.getItem("token"));
     fetch(urls.backendRoute + urls.itemsList, {
       method: "get",
@@ -102,79 +87,13 @@
       });
   }
 
-  //   function calculateDiscount(price, quantity, discount) {
-  //     let amountForDiscount = 0;
-  //     if (discount < 0 || discount == 0) {
-  //       return amountForDiscount;
-  //     }
-  //     // prettier-ignore
-  //     if (!Number.isInteger(discount) && (discount > 0 && discount < 1)) {
-  //       // prettier-ignore
-  //       amountForDiscount = ((price * quantity) * discount)
-  //     } else {
-  //       // prettier-ignore
-  //       amountForDiscount = parseFloat(discount)
-  //     }
-
-  //     return amountForDiscount;
-  //   }
-
-  //   function calculateTax(invoiceDetailID) {
-  //     const invoiceDetailObject = invoiceDetails.find(
-  //       (e) => e.id === invoiceDetailID
-  //     );
-  //     // prettier-ignore
-  //     return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
-  //   }
-
   function calculateAmount(invoiceDetailID) {
     const invoiceDetailObject = invoiceDetails.find(
       (e) => e.id === invoiceDetailID
     );
 
-    return (
-      //   calculateTax(invoiceDetailID) +
-      //   (
-      invoiceDetailObject.price * invoiceDetailObject.quantity
-      //     - calculateDiscount(
-      //       invoiceDetailObject.price,
-      //       invoiceDetailObject.quantity,
-      //       invoiceDetailObject.discount
-      //     ))
-    );
+    return invoiceDetailObject.price * invoiceDetailObject.quantity;
   }
-
-  //   function calculateTotalQuantity() {
-  //     let sumQuantity = 0;
-  //     invoiceDetails.map((e) => {
-  //       sumQuantity += e.quantity;
-  //     });
-  //     totalQuantity = sumQuantity;
-  //   }
-
-  //   function calculateTotalTax() {
-  //     let sumTaxes = 0;
-  //     invoiceDetails.map((e) => {
-  //       sumTaxes += calculateTax(e.id);
-  //     });
-  //     totalTax = sumTaxes;
-  //   }
-
-  //   function calculateTotalAmount() {
-  //     let sumAmounts = 0;
-  //     invoiceDetails.map((e) => {
-  //       sumAmounts += calculateAmount(e.id);
-  //     });
-  //     totalAmount = sumAmounts;
-  //   }
-
-  //   function calulateTotalDiscount() {
-  //     let sumDiscounts = 0;
-  //     invoiceDetails.map((e) => {
-  //       sumDiscounts += calculateDiscount(e.price, e.quantity, e.discount);
-  //     });
-  //     totalDiscount = sumDiscounts;
-  //   }
 
   function generateRowId() {
     counter++;
@@ -191,11 +110,6 @@
             item: { id: e.value.id, name: e.value.name },
             quantity: 1,
             price: e.value.price,
-            // tax: $taxes.find((i) => i.id == e.value.tax)?.percentage / 100,
-            // discount:
-            //   invoiceHeaderDiscont > 0 && invoiceHeaderDiscont < 1
-            //     ? invoiceHeaderDiscont
-            //     : 0,
           };
           invoiceDetails = [...invoiceDetails, invoiceDetail];
         }
@@ -210,11 +124,6 @@
             item: { id: insertItem.id, name: insertItem.name },
             quantity: 1,
             price: insertItem.price,
-            // tax: $taxes.find((e) => insertItem.tax)?.percentage / 100,
-            // discount:
-            //   invoiceHeaderDiscont > 0 && invoiceHeaderDiscont < 1
-            //     ? invoiceHeaderDiscont
-            //     : 0,
           };
           invoiceDetails = [...invoiceDetails, invoiceDetail];
           const addItem = $items.find((e) => e.id == item);
@@ -226,7 +135,6 @@
                 id: addItem.id,
                 name: addItem.name,
                 price: addItem.price,
-                // tax: addItem.tax,
               },
             },
           ];
@@ -263,32 +171,36 @@
 
     quantityModal = false;
   }
-  //   function updateQuantity(rowId, value) {
-  //     console.log("me ejecute");
-  //     invoiceDetails = invoiceDetails.map((e, index) => {
-  //       if (e.id === rowId) {
-  //         e.quantity = value ? Number(value) : 1;
-  //       }
-  //       return e;
-  //     });
-  //   }
 
-  //   function updateDiscount(rowId, value) {
-  //     if (!value) {
-  //       return;
-  //     }
-  //     invoiceDetails = invoiceDetails.map((e) => {
-  //       if (e.id === rowId) {
-  //         e.discount = Number.parseFloat(value);
-  //       }
-  //       return e;
-  //     });
-  //     invoiceHeaderDiscont = 0;
-  //   }
+  function updateDescription(e, rowId) {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+
+    invoiceDetails = invoiceDetails.map((el, index) => {
+      if (el.id === rowId) {
+        el.description = data.description;
+      }
+      return el;
+    });
+
+    descriptionModal = false;
+  }
+
+  function updatePrice(e, rowId) {
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    invoiceDetails = invoiceDetails.map((el, index) => {
+      if (el.id === rowId) {
+        el.price = Number(data.price) > 0 ? Number(data.price) : el.price;
+      }
+      return el;
+    });
+
+    priceModal = false;
+  }
 
   function deleteRow(rowId, all = false) {
     if (all) {
-      invoiceHeaderDiscont = 0;
       invoiceDetails.filter((e) => {
         if (isNumeric(e.id)) {
           invoiceDetailsToDelete = [...invoiceDetailsToDelete, e];
@@ -327,12 +239,6 @@
         }
       });
     }
-    // prettier-ignore
-    if (!(invoiceHeaderDiscont > 0 && invoiceHeaderDiscont < 1)){
-        invoiceDetails.map(e => {
-            e.discount = invoiceHeaderDiscont/invoiceDetails.length
-        })
-    }
   }
 
   function openQuantityModal(rowId) {
@@ -340,10 +246,24 @@
     quantityModal = true;
   }
 
-  //   function openDiscountModal(rowId) {
-  //     rowDetail = invoiceDetails.find((e) => e.id === rowId);
-  //     discountModal = true;
-  //   }
+  function openDescriptionModal(rowId) {
+    rowDetail = invoiceDetails.find((e) => e.id === rowId);
+    descriptionModal = true;
+  }
+
+  function openPriceModal(rowId) {
+    rowDetail = invoiceDetails.find((e) => e.id === rowId);
+    priceModal = true;
+  }
+
+  function hasDescription(rowId) {
+    let row = invoiceDetails.find((e) => e.id === rowId);
+    if (row?.description?.length > 0) {
+      return true;
+    }
+
+    return false;
+  }
 
   onMount(() => {
     getItems();
@@ -393,11 +313,6 @@
     <TableHeadCell padding={"px-3 py-3"} class="text-center"
       >Cant.</TableHeadCell
     >
-    <!-- <TableHeadCell padding={"px-3 py-3"} class="text-center">Imp.</TableHeadCell
-    > -->
-    <!-- <TableHeadCell padding={"px-3 py-3"} class="text-center"
-      >Descto.</TableHeadCell
-    > -->
     <TableHeadCell padding={"px-3 py-3"} class="text-center"
       >Monto</TableHeadCell
     >
@@ -409,10 +324,16 @@
     {#each invoiceDetails as invoiceDetail, i}
       <TableBodyRow class="h-5">
         <TableBodyCell class="text-center py-1 px-3">{i + 1}</TableBodyCell>
-        <TableBodyCell class="py-1 px-3"
+        <TableBodyCell
+          class="py-1 px-3 cursor-pointer {hasDescription(invoiceDetail.id)
+            ? 'text-green-400 dark:text-green-400'
+            : 'text-white'}"
+          on:click={() => openDescriptionModal(invoiceDetail.id)}
           >{invoiceDetail.item.name}</TableBodyCell
         >
-        <TableBodyCell class="text-center py-1 px-3"
+        <TableBodyCell
+          class="text-center py-1 px-3 cursor-pointer"
+          on:click={() => openPriceModal(invoiceDetail.id)}
           >{new Intl.NumberFormat("es-DO").format(
             invoiceDetail.price
           )}</TableBodyCell
@@ -423,12 +344,6 @@
         >
           {invoiceDetail.quantity}
         </TableBodyCell>
-        <!-- <TableBodyCell
-          class="text-center py-1 px-3 cursor-pointer"
-          on:click={() => openDiscountModal(invoiceDetail.id)}
-        >
-          {new Intl.NumberFormat("es-DO").format(invoiceDetail.discount)}
-        </TableBodyCell> -->
         <TableBodyCell class="text-center py-1 px-3">
           {new Intl.NumberFormat("es-DO").format(
             calculateAmount(invoiceDetail.id)
@@ -458,41 +373,13 @@
       </TableBodyRow>
     {:else}
       <TableBodyRow>
-        <TableBodyCell colspan="8" class="text-center"
+        <TableBodyCell colspan="6" class="text-center"
           >No hay items</TableBodyCell
         >
       </TableBodyRow>
     {/each}
   </TableBody>
-  <!-- <tfoot class="sticky bottom-0">
-    <tr class="font-semibold text-gray-900 dark:text-white dark:bg-gray-700">
-      <th colspan="2" scope="row" class="py-3 px-6 text-left">Total</th>
-      <th />
-      <td class="py-3 px-6 text-center">{totalQuantity}</td>
-      <td class="py-3 px-6 text-center"
-        >{new Intl.NumberFormat("es-DO", {
-          style: "currency",
-          currency: "DOP",
-        }).format(totalTax)}</td
-      >
-      <td class="py-1 px-6 text-center flex-1">
-        {new Intl.NumberFormat("es-DO", {
-          style: "currency",
-          currency: "DOP",
-        }).format(totalDiscount)}
-      </td>
-      <td class="py-3 px-6 text-center"
-        >{new Intl.NumberFormat("es-DO", {
-          style: "currency",
-          currency: "DOP",
-        }).format(totalAmount)}</td
-      >
-      <td class="py-3 px-6" />
-    </tr>
-  </tfoot> -->
 </Table>
-
-<!-- </div> -->
 
 <Modal title="Busqueda avanzada de items" bind:open={defaultModal} autoclose>
   <div class="h-[25rem]">
@@ -534,37 +421,67 @@
   </form>
   <svelte:fragment slot="footer">
     <Button type="submit" form="form_quantity" color="green">Aplicar</Button>
-    <Button color="red" on:click={() => (quantityModal = false)}>Cerrar</Button>
+    <Button color="alternative" on:click={() => (quantityModal = false)}
+      >Cerrar</Button
+    >
   </svelte:fragment>
 </Modal>
 
-<!-- <Modal
-  title="Descuento al item: {rowDetail?.item.name}"
-  bind:open={discountModal}
+<Modal
+  title="Descripción del item: {rowDetail?.item.name}"
+  bind:open={descriptionModal}
   size="sm"
+  autoclose={false}
 >
   <form
-    id="form_discount"
-    on:submit|preventDefault|stopPropagation={() =>
-      updateDiscount(rowDetail.id, tempDiscount?.value)}
+    id="form_description"
+    on:submit|preventDefault|stopPropagation={(e) =>
+      updateDescription(e, rowDetail.id)}
   >
-    <Input
-      type="number"
-      step="0.01"
-      class="m-0 {customColorsClassDark.input}"
-      value={rowDetail.discount}
-      on:input={(e) => (tempDiscount = e.target)}
-      required
+    <Textarea
+      class={customColorsClassDark.input}
+      name="description"
+      rows="9"
+      bind:value={rowDetail.description}
       disabled={!invoiceActive}
     />
   </form>
   <svelte:fragment slot="footer">
-    <Button
-      type="submit"
-      form="form_discount"
-      color="green"
-      on:click={() => (discountModal = false)}>Aplicar</Button
+    <Button type="submit" form="form_description" color="green">Aplicar</Button>
+    <Button color="alternative" on:click={() => (descriptionModal = false)}
+      >Cerrar</Button
     >
-    <Button color="red" on:click={() => (discountModal = false)}>Cerrar</Button>
   </svelte:fragment>
-</Modal> -->
+</Modal>
+
+<Modal
+  title="Precio Und. del item: {rowDetail?.item.name}"
+  bind:open={priceModal}
+  size="sm"
+  autoclose={false}
+>
+  <form
+    id="form_price"
+    on:submit|preventDefault|stopPropagation={(e) =>
+      updatePrice(e, rowDetail.id)}
+  >
+    <ButtonGroup class="w-full">
+      <InputAddon>DOP$</InputAddon>
+      <Input
+        type="number"
+        step="any"
+        name="price"
+        class={customColorsClassDark.input}
+        value={rowDetail.price}
+        required
+        disabled={!invoiceActive}
+      />
+    </ButtonGroup>
+  </form>
+  <svelte:fragment slot="footer">
+    <Button type="submit" form="form_price" color="green">Aplicar</Button>
+    <Button color="alternative" on:click={() => (priceModal = false)}
+      >Cerrar</Button
+    >
+  </svelte:fragment>
+</Modal>
