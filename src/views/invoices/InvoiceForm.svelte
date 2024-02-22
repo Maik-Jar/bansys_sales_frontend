@@ -35,8 +35,6 @@
   const invoiceHeader = Object.seal({
     id: null,
     number: null,
-    // receipt: {},
-    // receipt_sequence: {},
     tax: 0.0,
     discount: 0.0,
     sales_type: 1,
@@ -641,6 +639,7 @@
     </div>
   </div>
 </form>
+<hr class="my-2 bg-gray-400 h-1" />
 <div class="flex space-x-3 mt-5">
   <Button color="dark" on:click={() => navigateTo("/invoices_manager")}
     >Volver</Button

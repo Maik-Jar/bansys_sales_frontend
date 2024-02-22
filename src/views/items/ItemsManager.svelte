@@ -13,8 +13,10 @@
     TableHeadCell,
     PaginationItem,
     Search,
-    A,
+    Dropdown,
+    DropdownItem,
   } from "flowbite-svelte";
+  import { DotsHorizontalOutline } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
@@ -111,52 +113,60 @@
     >
   {/if}
 </div>
-<div class="h-[35rem]">
-  <Table shadow hoverable={true}>
-    <TableHead>
-      <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Nombre</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Marca</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Precio</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Stock</TableHeadCell>
-      <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
-    </TableHead>
-    <TableBody tableBodyClass={"divide-y min-h-full"}>
-      {#each itemsObject.results as item, i}
-        <TableBodyRow class="h-5">
-          <TableBodyCell class={"w-[3%] p-2 text-center"}
-            >{(i += 1)}</TableBodyCell
-          >
-          <TableBodyCell class="w-[25%] p-2"
-            >{item.name.toUpperCase()}</TableBodyCell
-          >
+<Table
+  shadow
+  hoverable={true}
+  divClass={"relative h-[18rem] xl:h-[22rem] 2xl:h-[40rem] overflow-y-auto mb-5 bg-white"}
+>
+  <TableHead class={"sticky top-0 w-full"}>
+    <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Nombre</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Marca</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Precio</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Stock</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
+  </TableHead>
+  <TableBody tableBodyClass={"divide-y min-h-full"}>
+    {#each itemsObject.results as item, i}
+      <TableBodyRow class="h-5">
+        <TableBodyCell class={"w-[3%] p-2 text-center"}
+          >{(i += 1)}</TableBodyCell
+        >
+        <TableBodyCell class="w-[25%] p-2"
+          >{item.name.toUpperCase()}</TableBodyCell
+        >
 
-          <TableBodyCell class={"w-[10%] p-2 text-center"}
-            >{item.brand ? item.brand.toUpperCase() : "---"}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}
-            >{item.price}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[12%] p-2 text-center"}
-            >{item.stock}</TableBodyCell
-          >
-          <TableBodyCell class={"w-[10%] p-2 text-center"}>
-            <A
-              class="!text-amber-500 hover:!text-amber-600"
-              on:click={() => navigateTo("/item_form/" + item.id)}>Editar</A
-            >
-          </TableBodyCell>
-        </TableBodyRow>
-      {:else}
-        <TableBodyRow>
-          <TableBodyCell colspan="6" class={" text-center"}
-            >NO HAY DATOS</TableBodyCell
-          >
-        </TableBodyRow>
-      {/each}
-    </TableBody>
-  </Table>
-</div>
+        <TableBodyCell class={"w-[10%] p-2 text-center"}
+          >{item.brand ? item.brand.toUpperCase() : "---"}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}
+          >{item.price}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[12%] p-2 text-center"}
+          >{item.stock}</TableBodyCell
+        >
+        <TableBodyCell class={"w-[10%] p-2 text-center"}>
+          <div class="flex justify-center">
+            <DotsHorizontalOutline />
+            <Dropdown>
+              <DropdownItem
+                on:click={() => navigateTo("/item_form/" + item.id)}
+              >
+                Editar</DropdownItem
+              >
+            </Dropdown>
+          </div>
+        </TableBodyCell>
+      </TableBodyRow>
+    {:else}
+      <TableBodyRow>
+        <TableBodyCell colspan="6" class={" text-center"}
+          >NO HAY DATOS</TableBodyCell
+        >
+      </TableBodyRow>
+    {/each}
+  </TableBody>
+</Table>
 <div class="flex mt-4 space-x-3 justify-end">
   <PaginationItem on:click={previousPage}>Previous</PaginationItem>
   <PaginationItem on:click={nextPage}>Next</PaginationItem>

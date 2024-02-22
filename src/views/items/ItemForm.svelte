@@ -3,13 +3,15 @@
   import Swal from "sweetalert2";
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
-  import { providers, taxes } from "../../lib/stores/stores";
+  import { providers } from "../../lib/stores/stores";
   import { hasPermission } from "../../lib/utils/functions";
   import {
     Heading,
+    Span,
     Label,
     Input,
     Select,
+    MultiSelect,
     Button,
     InputAddon,
     ButtonGroup,
@@ -29,14 +31,22 @@
     brand: null,
     reference: null,
     price: 0.0,
-    tax: 1,
+    discount: 0.0,
     stock: 0,
+    stock_min: 0,
+    stock_max: 0,
     is_service: false,
-    provider: 1,
+    provider: [],
     status: true,
   });
 
   let isEditable = false;
+  let providersList = $providers.map((e) => {
+    return {
+      value: e.id,
+      name: e.name,
+    };
+  });
 
   function getItem() {
     if (isEditable) {
@@ -59,8 +69,10 @@
             item.brand = data.brand;
             item.reference = data.reference;
             item.price = data.price;
-            item.tax = data.tax;
+            item.discount = data.discount;
             item.stock = data.stock;
+            item.stock_min = data.stock_min;
+            item.stock_max = data.stock_max;
             item.is_service = data.is_service;
             item.provider = data.provider;
             item.status = data.status;
@@ -170,15 +182,9 @@
     class="flex justify-start pb-5 mb-2 border-b-4 border-gray-100 dark:border-gray-400"
   >
     <div>
-      <Label for="code" class="block mb-2 {customColorsClassDark.label}"
-        >Código</Label
+      <Heading tag="h4" class="w-1/2 {customColorsClassDark.label} self-end"
+        >Código: <Span highlight>{item.id ? item.id : ""}</Span></Heading
       >
-      <Input
-        id="code"
-        class="w-[50%] text-center {customColorsClassDark.input}"
-        bind:value={item.id}
-        readonly
-      />
     </div>
   </div>
   <Heading tag="h3" class={"dark:text-black"}>Información General</Heading>
@@ -203,7 +209,6 @@
         required
       />
     </div>
-
     <div>
       <Label for="brand" class="block mb-2 {customColorsClassDark.label}"
         >Marca (opcional)</Label
@@ -242,18 +247,22 @@
         />
       </ButtonGroup>
     </div>
-    <Label class={customColorsClassDark.label}
-      >Impuesto
-      <Select
-        class="mt-2 {customColorsClassDark.input}"
-        bind:value={item.tax}
-        required
+    <div>
+      <Label for="discount" class="block mb-2 {customColorsClassDark.label}"
+        >Descuento</Label
       >
-        {#each $taxes as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
-      </Select>
-    </Label>
+      <ButtonGroup class="w-full">
+        <InputAddon>$</InputAddon>
+        <Input
+          id="discount"
+          step="any"
+          class={customColorsClassDark.input}
+          type="number"
+          bind:value={item.discount}
+          required
+        />
+      </ButtonGroup>
+    </div>
     <div>
       <Label for="stock" class="block mb-2 {customColorsClassDark.label}"
         >Stock</Label
@@ -263,20 +272,40 @@
         type="number"
         class={customColorsClassDark.input}
         bind:value={item.stock}
+      />
+    </div>
+    <div>
+      <Label for="stock_min" class="block mb-2 {customColorsClassDark.label}"
+        >Stock Minimo</Label
+      >
+      <Input
+        id="stock_min"
+        type="number"
+        class={customColorsClassDark.input}
+        bind:value={item.stock_min}
+      />
+    </div>
+    <div>
+      <Label for="stock_max" class="block mb-2 {customColorsClassDark.label}"
+        >Stock Maximo</Label
+      >
+      <Input
+        id="stock_max"
+        type="number"
+        class={customColorsClassDark.input}
+        bind:value={item.stock_max}
         readonly
       />
     </div>
     <Label class={customColorsClassDark.label}
-      >proveedor
-      <Select
+      >Proveedores
+      <MultiSelect
         class="mt-2 {customColorsClassDark.input}"
+        dropdownClass="max-h-40 {customColorsClassDark.input}"
+        items={providersList}
         bind:value={item.provider}
         required
-      >
-        {#each $providers as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
-      </Select>
+      ></MultiSelect>
     </Label>
     <Label class={customColorsClassDark.label}
       >Estatus

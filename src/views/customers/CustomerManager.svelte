@@ -14,8 +14,10 @@
     TableHeadCell,
     PaginationItem,
     Search,
-    A,
+    Dropdown,
+    DropdownItem,
   } from "flowbite-svelte";
+  import { DotsHorizontalOutline } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
@@ -112,7 +114,6 @@
     >
   {/if}
 </div>
-<!-- <div class="h-[35rem]"> -->
 <Table
   shadow
   hoverable={true}
@@ -147,11 +148,16 @@
           >{customer.phone}</TableBodyCell
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}>
-          <A
-            class="!text-amber-500 hover:!text-amber-600"
-            on:click={() => navigateTo("/customer_form/" + customer.id)}
-            >Editar</A
-          >
+          <div class="flex justify-center">
+            <DotsHorizontalOutline />
+            <Dropdown>
+              <DropdownItem
+                on:click={() => navigateTo("/customer_form/" + customer.id)}
+              >
+                Editar</DropdownItem
+              >
+            </Dropdown>
+          </div>
         </TableBodyCell>
       </TableBodyRow>
     {:else}
