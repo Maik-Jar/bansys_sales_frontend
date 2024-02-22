@@ -334,7 +334,13 @@
   function calculateTax() {
     totalTax = 0;
 
-    totalTax = (subTotal - totalDiscoint) * (receipt?.tax?.percentage / 100);
+    if (isEditable) {
+      totalTax = (subTotal - totalDiscoint) * Number(invoiceHeader?.tax);
+      return;
+    }
+    // console.log(receipt?.tax?.percentage);
+
+    // totalTax = (subTotal - totalDiscoint) * receipt?.tax?.percentage;
   }
 
   function calculateTotal() {
@@ -494,6 +500,7 @@
       bind:receiptSequence
       bind:isEditable
       bind:assignReceipt
+      bind:tax={invoiceHeader.tax}
     />
   </div>
   <InvoiceDetailsForm

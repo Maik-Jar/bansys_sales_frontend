@@ -30,7 +30,7 @@
       selectedItems = [
         ...selectedItems,
         {
-          label: addItem.name + " / " + addItem.price,
+          label: addItem.id + ": " + addItem.name + " ..... $" + addItem.price,
           value: {
             id: addItem.id,
             name: addItem.name,
@@ -69,7 +69,7 @@
           const data = await res.json();
           multiselectOptions = data.map((e) => {
             return {
-              label: e.name + " / " + e.price,
+              label: e.id + ": " + e.name + " ..... $" + e.price,
               value: { id: e.id, name: e.name, price: e.price },
             };
           });

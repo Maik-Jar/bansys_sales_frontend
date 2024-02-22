@@ -85,13 +85,9 @@
     return amountForDiscount;
   }
 
-  //   function calculateTax(invoiceDetail, invoiceDetailID) {
-  //     const invoiceDetailObject = invoiceDetail.find(
-  //       (e) => e.id === invoiceDetailID
-  //     );
-  //     // prettier-ignore
-  //     return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
-  //   }
+  function calculateTax(total, tax) {
+    return total * Number(tax);
+  }
 
   function calculateAmount(invoiceDetail, invoiceDetailID) {
     const invoiceDetailObject = invoiceDetail.find(
@@ -101,12 +97,13 @@
     return invoiceDetailObject.price * invoiceDetailObject.quantity;
   }
 
-  function calculateTotal(invoiceDetails, generalDiscount) {
+  function calculateTotal(invoiceDetails, generalDiscount, tax) {
     let sumAmounts = 0;
     invoiceDetails.map((e) => {
       sumAmounts += calculateAmount(invoiceDetails, e.id);
     });
-    return sumAmounts - calculateDiscount(sumAmounts, generalDiscount);
+    sumAmounts -= calculateDiscount(sumAmounts, generalDiscount);
+    return sumAmounts + calculateTax(sumAmounts, tax);
   }
 
   function printInvoice(invoiceID, status) {
@@ -218,7 +215,11 @@
             style: "currency",
             currency: "DOP",
           }).format(
-            calculateTotal(invoice.invoice_detail, invoice.discount)
+            calculateTotal(
+              invoice.invoice_detail,
+              invoice.discount,
+              invoice.tax
+            )
           )}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}

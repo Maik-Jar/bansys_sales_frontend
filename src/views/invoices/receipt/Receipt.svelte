@@ -10,6 +10,7 @@
   } from "flowbite-svelte";
 
   export let receipt;
+  export let tax;
   export let receiptSequence;
   export let isEditable = false;
   export function assignReceipt(rs) {
@@ -28,6 +29,7 @@
 
   $: if (selectedReceipt) {
     receipt = receiptObjectsList.find((e) => e.id == selectedReceipt);
+    tax = receipt?.tax?.percentage;
   }
 
   function getReceipt() {

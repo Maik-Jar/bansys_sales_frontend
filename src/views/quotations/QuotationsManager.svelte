@@ -85,13 +85,9 @@
     return amountForDiscount;
   }
 
-  //   function calculateTax(quotationDetail, quotationDetailID) {
-  //     const invoiceDetailObject = quotationDetail.find(
-  //       (e) => e.id === quotationDetailID
-  //     );
-  //     // prettier-ignore
-  //     return ((invoiceDetailObject.price * invoiceDetailObject.quantity)-calculateDiscount(invoiceDetailObject.price,invoiceDetailObject.quantity,invoiceDetailObject.discount)) * invoiceDetailObject.tax;
-  //   }
+  function calculateTax(total, tax) {
+    return total * Number(tax);
+  }
 
   function calculateAmount(quotationDetail, quotationDetailID) {
     const invoiceDetailObject = quotationDetail.find(
@@ -101,12 +97,13 @@
     return invoiceDetailObject.price * invoiceDetailObject.quantity;
   }
 
-  function calculateTotal(quotationDetails, generalDiscount) {
+  function calculateTotal(quotationDetails, generalDiscount, tax) {
     let sumAmounts = 0;
     quotationDetails.map((e) => {
       sumAmounts += calculateAmount(quotationDetails, e.id);
     });
-    return sumAmounts - calculateDiscount(sumAmounts, generalDiscount);
+    sumAmounts -= calculateDiscount(sumAmounts, generalDiscount);
+    return sumAmounts + calculateTax(sumAmounts, tax);
   }
 
   function printQuotationA4(quotationID, status) {
@@ -212,7 +209,11 @@
             style: "currency",
             currency: "DOP",
           }).format(
-            calculateTotal(quotation.quotation_detail, quotation.discount)
+            calculateTotal(
+              quotation.quotation_detail,
+              quotation.discount,
+              quotation.tax
+            )
           )}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
