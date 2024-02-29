@@ -2,7 +2,7 @@
   import { urls } from "../../lib/utils/urls";
   import { navigateTo } from "svelte-router-spa";
   import Swal from "sweetalert2";
-  import { Input, Label, Helper, Button, Heading } from "flowbite-svelte";
+  import { Input, Label, Button, Heading } from "flowbite-svelte";
 
   const credentials = Object.seal({
     username: null,

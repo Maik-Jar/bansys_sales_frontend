@@ -11,10 +11,11 @@ import InvociesManager from "../../views/invoices/InvociesManager.svelte";
 import InvoiceForm from "../../views/invoices/InvoiceForm.svelte";
 import QuotationsManager from "../../views/quotations/QuotationsManager.svelte";
 import QuotationForm from "../../views/quotations/QuotationForm.svelte";
+import { getItem } from "../utils/functions";
 
 function isAuthenticated() {
-  const isLogin = JSON.parse(localStorage.getItem("isLogin"));
-  const token = localStorage.getItem("token");
+  const isLogin = JSON.parse(getItem("isLogin"));
+  const token = getItem("token");
 
   if (isLogin && token.length > 0) {
     return true;

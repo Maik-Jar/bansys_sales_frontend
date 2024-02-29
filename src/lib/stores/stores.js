@@ -1,5 +1,6 @@
 import { readable } from "svelte/store";
 import { urls } from "../utils/urls";
+import { getItem } from "../utils/functions";
 
 export const documentsTypes = readable([], (set) => {
   fetch(urls.backendRoute + urls.documentsTypesEndPoint).then(async (res) => {
@@ -9,7 +10,7 @@ export const documentsTypes = readable([], (set) => {
 });
 
 export const providers = readable([], (set) => {
-  const token = JSON.parse(localStorage.getItem("token"));
+  const token = JSON.parse(getItem("token"));
   fetch(urls.backendRoute + urls.providersEndPoint + `?not_paginated=true`, {
     headers: {
       Authorization: `Token ${token.token}`,

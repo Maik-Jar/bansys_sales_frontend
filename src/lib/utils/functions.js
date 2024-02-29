@@ -11,3 +11,9 @@ export function hasPermission(permission) {
   }
   return hasPermision;
 }
+
+export function getItem(key) {
+  const data = localStorage.getItem(key);
+
+  return data ? data : "";
+}
