@@ -110,7 +110,8 @@
       size="sm"
       color="blue"
       pill
-      on:click={() => navigateTo("/customer_form")}>Nuevo cliente</Button
+      on:click={() => navigateTo("/customers/customer_form?type=new")}
+      >Nuevo cliente</Button
     >
   {/if}
 </div>
@@ -142,7 +143,7 @@
             .name}</TableBodyCell
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}
-          >{customer.document_id}</TableBodyCell
+          >{customer.document_id ? customer.document_id : ""}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
           >{customer.phone}</TableBodyCell
@@ -152,7 +153,10 @@
             <DotsHorizontalOutline />
             <Dropdown>
               <DropdownItem
-                on:click={() => navigateTo("/customer_form/" + customer.id)}
+                on:click={() =>
+                  navigateTo(
+                    `customers/customer_form?type=update&id=${customer.id}`
+                  )}
               >
                 Editar</DropdownItem
               >

@@ -28,6 +28,7 @@
   let open = false;
   let tempAmount;
   let paymentRow;
+  let selected = 1;
 
   $: if (payments) {
     calculateTotalPayments();
@@ -69,6 +70,7 @@
       }
     }
 
+    selected = 1;
     e.target.reset();
   }
 
@@ -77,17 +79,6 @@
       payments = payments.map((e) => {
         if (e.id === paymentId) {
           e.amount = Number.parseFloat(value);
-        }
-        return e;
-      });
-    }
-  }
-
-  function updateRowPaymentMethod(paymentId, value) {
-    if (activePayments) {
-      payments = payments.map((e) => {
-        if (e.id === paymentId) {
-          e.payment_method = Number(value.value);
         }
         return e;
       });
@@ -108,11 +99,6 @@
     }
   }
 
-  function openModal(paymentRowId) {
-    paymentRow = payments.find((e) => e.id === paymentRowId);
-    open = true;
-  }
-
   function calculateTotalPayments() {
     let sumPayments = 0;
 
@@ -123,84 +109,6 @@
     totalPayments = sumPayments;
   }
 </script>
-
-<!-- <div class="col-start-4 row-span-3 row-start-1">
-  <Table
-    hoverable={true}
-    shadow
-    divClass={"relative overflow-y-auto h-full bg-white"}
-  >
-    <TableHead class={"sticky top-0 w-full"}>
-      <TableHeadCell colspan="2" class="px-3 text-center">Pagos</TableHeadCell>
-      <TableHeadCell class="text-right px-3"
-        ><Button
-          color="blue"
-          size="sm"
-          on:click={addRowPayment}
-          disabled={!activePayments}
-          ><svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="1.3rem"
-            height="1.3rem"
-            viewBox="0 0 24 24"
-            ><path
-              fill="currentColor"
-              d="M12 4a1 1 0 0 0-1 1v6H5a1 1 0 1 0 0 2h6v6a1 1 0 1 0 2 0v-6h6a1 1 0 1 0 0-2h-6V5a1 1 0 0 0-1-1Z"
-            /></svg
-          ></Button
-        ></TableHeadCell
-      >
-    </TableHead>
-    <TableBody tableBodyClass="divide-y">
-      {#each payments as payment}
-        <TableBodyRow class="h-5">
-          <TableBodyCell
-            class="px-3 py-1 text-center cursor-pointer"
-            on:click={() => openModal(payment.id)}
-          >
-            {new Intl.NumberFormat("es-DO", {
-              style: "currency",
-              currency: "DOP",
-            }).format(payment.amount)}
-          </TableBodyCell>
-          <TableBodyCell class="px-3 py-1 text-center">
-            <Select
-              underline
-              size="sm"
-              id="paymentMethod"
-              value={payment.payment_method}
-              on:change={(e) => updateRowPaymentMethod(payment.id, e.target)}
-              required={activePayments}
-              disabled={!activePayments}
-            >
-              {#each $paymentMethods as { id, name }}
-                <option value={id}>{name}</option>
-              {/each}
-            </Select>
-          </TableBodyCell>
-          <TableBodyCell class="px-3 py-1 text-right"
-            ><CloseButton
-              on:click={() => deleteRowPayment(payment.id)}
-              disabled={!activePayments}
-            /></TableBodyCell
-          >
-        </TableBodyRow>
-      {/each}
-    </TableBody>
-    <tfoot class="absolute inset-x-0 bottom-0">
-      <tr class="font-semibold text-gray-900 dark:text-white dark:bg-gray-700">
-        <th scope="row" class="py-3 px-6 text-left w-[50%]">Total</th>
-        <td class="py-3 px-6 w-[50%] text-center"
-          >{new Intl.NumberFormat("es-DO", {
-            style: "currency",
-            currency: "DOP",
-          }).format(totalPayments)}</td
-        >
-        <td />
-      </tr>
-    </tfoot>
-  </Table>
-</div> -->
 
 <Modal title="Monto pagado" bind:open size="sm">
   <form
@@ -218,15 +126,6 @@
       required={activePayments}
       disabled={!activePayments}
     />
-    <!-- <Input
-      type="number"
-      step="0.01"
-      class="m-0 {customColorsClassDark.input}"
-      value={rowDetail.discount}
-      on:input={(e) => (tempDiscount = e.target)}
-      required
-      disabled={!quotationActive}
-    /> -->
   </form>
   <svelte:fragment slot="footer">
     <Button
@@ -264,6 +163,7 @@
         <Select
           id="paymentMethod"
           name="paymentMethod"
+          value={selected}
           required={activePayments}
           disabled={!activePayments}
         >

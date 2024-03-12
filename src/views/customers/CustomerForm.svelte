@@ -5,7 +5,7 @@
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
   import { documentsTypes } from "../../lib/stores/stores";
-  import { Heading, Label, Input, Select, Button } from "flowbite-svelte";
+  import { Heading, Label, Input, Select, Button, Span } from "flowbite-svelte";
 
   export let currentRoute;
 
@@ -32,7 +32,7 @@
       fetch(
         urls.backendRoute +
           urls.customersEndPoint +
-          `?customer_id=${currentRoute.namedParams.id}`,
+          `?customer_id=${currentRoute.queryParams.id}`,
         {
           headers: {
             Authorization: `Token ${token.token}`,
@@ -146,7 +146,8 @@
   }
 
   onMount(async () => {
-    isEditable = (await currentRoute.namedParams.id) ? true : false;
+    isEditable =
+      (await currentRoute.queryParams.type) == "update" ? true : false;
     getCustomer();
   });
 </script>
@@ -161,17 +162,9 @@
   <div
     class="flex justify-start pb-5 mb-2 border-b-4 border-gray-100 dark:border-gray-400"
   >
-    <div>
-      <Label for="code" class="block mb-2 {customColorsClassDark.label}"
-        >Código</Label
-      >
-      <Input
-        id="code"
-        class="w-[50%] text-center {customColorsClassDark.input}"
-        bind:value={customer.id}
-        readonly
-      />
-    </div>
+    <Heading tag="h4" class="w-1/2 {customColorsClassDark.label} self-end"
+      >Código: <Span highlight>{customer.id ? customer.id : ""}</Span></Heading
+    >
   </div>
   <Heading tag="h3" class={"dark:text-black"}>Información General</Heading>
   <div
@@ -252,7 +245,7 @@
   </div>
 </form>
 <div class="flex space-x-3 mt-3">
-  <Button color="dark" on:click={() => navigateTo("/customers_manager")}
+  <Button color="dark" on:click={() => navigateTo("/customers/customers_list")}
     >Volver</Button
   >
   {#if hasPermission("point_of_sales.add_customer") || hasPermission("point_of_sales.change_customer")}

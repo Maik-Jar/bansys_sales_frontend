@@ -170,7 +170,8 @@
       size="sm"
       color="blue"
       pill
-      on:click={() => navigateTo("/invoice_form")}>Nueva factura</Button
+      on:click={() => navigateTo("/sales/invoice_form?type=new")}
+      >Nueva factura</Button
     >
   {/if}
 </div>
@@ -237,7 +238,10 @@
             <DotsHorizontalOutline />
             <Dropdown>
               <DropdownItem
-                on:click={() => navigateTo("/invoice_form/" + invoice.id)}
+                on:click={() =>
+                  navigateTo(
+                    `/sales/invoice_form/?type=update&id=${invoice.id}`
+                  )}
               >
                 Editar</DropdownItem
               >

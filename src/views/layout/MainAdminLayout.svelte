@@ -43,12 +43,7 @@
 </script>
 
 <div class="h-screen max-h-screen bg-white dark:bg-gray-900">
-  <Navbar
-    let:hidden
-    let:toggle
-    class={"bg-white dark:bg-gray-900"}
-    classNavDiv={"mx-0 max-w-full "}
-  >
+  <Navbar let:hidden let:toggle class={"bg-white dark:bg-gray-900"}>
     <NavBrand href="/">
       <span
         class="ml-5 self-center whitespace-nowrap text-2xl font-semibold dark:text-white"
@@ -120,11 +115,11 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de facturas"
-                on:click={() => navigateTo("/invoices_manager")}
+                on:click={() => navigateTo("/sales/invoices_list")}
               />
               <SidebarDropdownItem
                 label="Gestión de cotizaciones"
-                on:click={() => navigateTo("/quotations_manager")}
+                on:click={() => navigateTo("/sales/quotations_list")}
               />
             </SidebarDropdownWrapper>
           {/if}
@@ -145,7 +140,7 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de clientes"
-                on:click={() => navigateTo("customers_manager")}
+                on:click={() => navigateTo("/customers/customers_list")}
               />
             </SidebarDropdownWrapper>
           {/if}
@@ -166,7 +161,7 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de proveedores"
-                on:click={() => navigateTo("/providers_manager")}
+                on:click={() => navigateTo("/providers/providers_list")}
               />
             </SidebarDropdownWrapper>
           {/if}
@@ -187,7 +182,45 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de items"
-                on:click={() => navigateTo("/items_manager")}
+                on:click={() => navigateTo("/products_and_services/items_list")}
+              />
+            </SidebarDropdownWrapper>
+          {/if}
+          {#if hasPermission("master_data.view_documenttype")}
+            <SidebarDropdownWrapper label="Master Data">
+              <svelte:fragment slot="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1em"
+                  height="1em"
+                  viewBox="0 0 448 512"
+                  {...$$props}
+                  ><path
+                    fill="currentColor"
+                    d="M448 73.143v45.714C448 159.143 347.667 192 224 192S0 159.143 0 118.857V73.143C0 32.857 100.333 0 224 0s224 32.857 224 73.143M448 176v102.857C448 319.143 347.667 352 224 352S0 319.143 0 278.857V176c48.125 33.143 136.208 48.572 224 48.572S399.874 209.143 448 176m0 160v102.857C448 479.143 347.667 512 224 512S0 479.143 0 438.857V336c48.125 33.143 136.208 48.572 224 48.572S399.874 369.143 448 336"
+                  /></svg
+                >
+              </svelte:fragment>
+              <SidebarDropdownItem
+                label="Tipos de documentos"
+                on:click={() => navigateTo("/master_data/document_type_list")}
+              />
+              <SidebarDropdownItem
+                label="Métodos de pago"
+                on:click={() =>
+                  navigateTo("/master_data/payments_methods_list")}
+              />
+              <SidebarDropdownItem
+                label="Impuestos"
+                on:click={() => navigateTo("/master_data/taxes_list")}
+              />
+              <SidebarDropdownItem
+                label="Tipos de ventas"
+                on:click={() => navigateTo("/master_data/sales_types_list")}
+              />
+              <SidebarDropdownItem
+                label="Comprobantes"
+                on:click={() => navigateTo("/master_data/receipts_list")}
               />
             </SidebarDropdownWrapper>
           {/if}

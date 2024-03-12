@@ -3,7 +3,7 @@
   import Swal from "sweetalert2";
   import { urls } from "../../lib/utils/urls";
   import { onMount } from "svelte";
-  import { providers } from "../../lib/stores/stores";
+  import { providers, items } from "../../lib/stores/stores";
   import { hasPermission } from "../../lib/utils/functions";
   import {
     Heading,
@@ -48,13 +48,20 @@
     };
   });
 
+  function updateItemsList() {
+    fetch(urls.backendRoute + urls.itemsListEndPoint).then(async (res) => {
+      const items_list = await res.json();
+      items.set(items_list);
+    });
+  }
+
   function getItem() {
     if (isEditable) {
       const token = JSON.parse(localStorage.getItem("token"));
       fetch(
         urls.backendRoute +
           urls.itemsEndPoint +
-          `?item_id=${currentRoute.namedParams.id}`,
+          `?item_id=${currentRoute.queryParams.id}`,
         {
           headers: {
             Authorization: `Token ${token.token}`,
@@ -110,6 +117,7 @@
               const data = await res.json();
               item.id = data.id;
               Swal.fire("¡Nuevo item creado!", "", "success");
+              updateItemsList();
               isEditable = true;
             } else {
               const message = await res.json();
@@ -150,6 +158,7 @@
           .then(async (res) => {
             if (res.ok) {
               Swal.fire("¡Datos guardados!", "", "success");
+              updateItemsList();
             } else {
               const message = await res.json();
               Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
@@ -166,7 +175,8 @@
   }
 
   onMount(async () => {
-    isEditable = (await currentRoute.namedParams.id) ? true : false;
+    isEditable =
+      (await currentRoute.queryParams.type) == "update" ? true : false;
     getItem();
   });
 </script>
@@ -272,6 +282,7 @@
         type="number"
         class={customColorsClassDark.input}
         bind:value={item.stock}
+        readonly
       />
     </div>
     <div>
@@ -294,7 +305,6 @@
         type="number"
         class={customColorsClassDark.input}
         bind:value={item.stock_max}
-        readonly
       />
     </div>
     <Label class={customColorsClassDark.label}
@@ -321,7 +331,9 @@
   </div>
 </form>
 <div class="flex space-x-3 mt-3">
-  <Button color="dark" on:click={() => navigateTo("/items_manager")}
+  <Button
+    color="dark"
+    on:click={() => navigateTo("products_and_services/items_list")}
     >Volver</Button
   >
   {#if hasPermission("point_of_sales.add_item") || hasPermission("point_of_sales.change_item")}

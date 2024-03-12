@@ -1,8 +1,8 @@
 <script>
-  import { urls } from "../../lib/utils/urls";
+  import { urls } from "../../../lib/utils/urls";
   import { navigateTo } from "svelte-router-spa";
   import { onMount } from "svelte";
-  import { hasPermission } from "../../lib/utils/functions";
+  import { hasPermission } from "../../../lib/utils/functions";
   import {
     Button,
     Table,
@@ -15,22 +15,23 @@
     Search,
     Dropdown,
     DropdownItem,
+    Badge,
   } from "flowbite-svelte";
   import { DotsHorizontalOutline } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
   let searchTerm = "";
-  let itemsObject = {
+  let receiptsObjects = {
     results: [],
   };
   let page = 1;
 
-  function getItems(page) {
+  function getReceipt(page) {
     const token = JSON.parse(localStorage.getItem("token"));
     fetch(
       urls.backendRoute +
-        urls.itemsEndPoint +
+        urls.receiptEndPoint +
         `?search=${searchTerm}&page=${page}`,
       {
         method: "get",
@@ -42,7 +43,7 @@
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
-          itemsObject = data;
+          receiptsObjects = data;
         } else {
           const data = await res.json();
           console.log(data);
@@ -54,21 +55,21 @@
   }
 
   function nextPage() {
-    if (itemsObject.next) {
+    if (receiptsObjects.next) {
       page++;
-      getItems(page);
+      getReceipt(page);
     }
   }
 
   function previousPage() {
-    if (itemsObject.previous) {
+    if (receiptsObjects.previous) {
       page--;
-      getItems(page);
+      getReceipt(page);
     }
   }
 
   onMount(() => {
-    getItems(1);
+    getReceipt(1);
   });
 </script>
 
@@ -86,7 +87,7 @@
       class="!p-2.5"
       on:click={() => {
         page = 1;
-        getItems(1);
+        getReceipt(1);
       }}
     >
       <svg
@@ -104,13 +105,13 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_item")}
+  {#if hasPermission("point_of_sales.add_receipt")}
     <Button
       size="sm"
       color="blue"
       pill
-      on:click={() => navigateTo("products_and_services/item_form?type=new")}
-      >Nuevo item</Button
+      on:click={() => navigateTo("master_data/receipt_form?type=new")}
+      >Nuevo Comprobante</Button
     >
   {/if}
 </div>
@@ -122,30 +123,33 @@
   <TableHead class={"sticky top-0 w-full"}>
     <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Nombre</TableHeadCell>
-    <TableHeadCell scope="col" class={"text-center"}>Marca</TableHeadCell>
-    <TableHeadCell scope="col" class={"text-center"}>Precio</TableHeadCell>
-    <TableHeadCell scope="col" class={"text-center"}>Stock</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Serie</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Vigencia</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Estado</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
   </TableHead>
   <TableBody tableBodyClass={"divide-y min-h-full"}>
-    {#each itemsObject.results as item, i}
+    {#each receiptsObjects.results as receipt, i}
       <TableBodyRow class="h-5">
         <TableBodyCell class={"w-[3%] p-2 text-center"}
           >{(i += 1)}</TableBodyCell
         >
         <TableBodyCell class="w-[25%] p-2"
-          >{item.name.toUpperCase()}</TableBodyCell
+          >{receipt.name.toUpperCase()}</TableBodyCell
         >
-
+        <TableBodyCell class="w-[25%] p-2 text-center"
+          >{receipt.serial.toUpperCase()}</TableBodyCell
+        >
+        <TableBodyCell class="w-[25%] p-2 text-center"
+          >{receipt.expiration}</TableBodyCell
+        >
         <TableBodyCell class={"w-[10%] p-2 text-center"}
-          >{item.brand ? item.brand.toUpperCase() : "---"}</TableBodyCell
-        >
-        <TableBodyCell class={"w-[10%] p-2 text-center"}
-          >{item.price}</TableBodyCell
-        >
-        <TableBodyCell class={"w-[12%] p-2 text-center"}
-          >{item.stock}</TableBodyCell
-        >
+          >{#if receipt.status}
+            <Badge color="green">Activo</Badge>
+          {:else}
+            <Badge color="red">Inactivo</Badge>
+          {/if}
+        </TableBodyCell>
         <TableBodyCell class={"w-[10%] p-2 text-center"}>
           <div class="flex justify-center">
             <DotsHorizontalOutline />
@@ -153,7 +157,7 @@
               <DropdownItem
                 on:click={() =>
                   navigateTo(
-                    `products_and_services/item_form?type=update&id=${item.id}`
+                    `master_data/receipt_form?type=update&id=${receipt.id}`
                   )}
               >
                 Editar</DropdownItem

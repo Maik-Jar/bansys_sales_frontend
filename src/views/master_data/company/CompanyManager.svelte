@@ -1,8 +1,8 @@
 <script>
-  import { urls } from "../../lib/utils/urls";
+  import { urls } from "../../../lib/utils/urls";
   import { navigateTo } from "svelte-router-spa";
   import { onMount } from "svelte";
-  import { hasPermission } from "../../lib/utils/functions";
+  import { hasPermission } from "../../../lib/utils/functions";
   import {
     Button,
     Table,
@@ -21,16 +21,16 @@
   export let currentRoute;
 
   let searchTerm = "";
-  let itemsObject = {
+  let companiesObjects = {
     results: [],
   };
   let page = 1;
 
-  function getItems(page) {
+  function getCompanies(page) {
     const token = JSON.parse(localStorage.getItem("token"));
     fetch(
       urls.backendRoute +
-        urls.itemsEndPoint +
+        urls.providersEndPoint +
         `?search=${searchTerm}&page=${page}`,
       {
         method: "get",
@@ -42,7 +42,7 @@
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json();
-          itemsObject = data;
+          companiesObjects = data;
         } else {
           const data = await res.json();
           console.log(data);
@@ -54,21 +54,21 @@
   }
 
   function nextPage() {
-    if (itemsObject.next) {
+    if (companiesObjects.next) {
       page++;
-      getItems(page);
+      getCompanies(page);
     }
   }
 
   function previousPage() {
-    if (itemsObject.previous) {
+    if (companiesObjects.previous) {
       page--;
-      getItems(page);
+      getCompanies(page);
     }
   }
 
   onMount(() => {
-    getItems(1);
+    getCompanies(1);
   });
 </script>
 
@@ -86,7 +86,7 @@
       class="!p-2.5"
       on:click={() => {
         page = 1;
-        getItems(1);
+        getCompanies(1);
       }}
     >
       <svg
@@ -104,13 +104,12 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_item")}
+  {#if hasPermission("point_of_sales.add_provider")}
     <Button
       size="sm"
       color="blue"
       pill
-      on:click={() => navigateTo("products_and_services/item_form?type=new")}
-      >Nuevo item</Button
+      on:click={() => navigateTo("/provider_form")}>Nuevo proveedor</Button
     >
   {/if}
 </div>
@@ -122,39 +121,37 @@
   <TableHead class={"sticky top-0 w-full"}>
     <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Nombre</TableHeadCell>
-    <TableHeadCell scope="col" class={"text-center"}>Marca</TableHeadCell>
-    <TableHeadCell scope="col" class={"text-center"}>Precio</TableHeadCell>
-    <TableHeadCell scope="col" class={"text-center"}>Stock</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Tipo Doc.</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Documento</TableHeadCell>
+    <TableHeadCell scope="col" class={"text-center"}>Contacto</TableHeadCell>
     <TableHeadCell scope="col" class={"text-center"}>Acción</TableHeadCell>
   </TableHead>
   <TableBody tableBodyClass={"divide-y min-h-full"}>
-    {#each itemsObject.results as item, i}
+    {#each companiesObjects.results as provider, i}
       <TableBodyRow class="h-5">
         <TableBodyCell class={"w-[3%] p-2 text-center"}
           >{(i += 1)}</TableBodyCell
         >
         <TableBodyCell class="w-[25%] p-2"
-          >{item.name.toUpperCase()}</TableBodyCell
+          >{provider.name.toUpperCase()}</TableBodyCell
         >
 
         <TableBodyCell class={"w-[10%] p-2 text-center"}
-          >{item.brand ? item.brand.toUpperCase() : "---"}</TableBodyCell
+          >{$documentsTypes.find((e) => e.id === provider?.document_type)
+            .name}</TableBodyCell
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}
-          >{item.price}</TableBodyCell
+          >{provider.document_id}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
-          >{item.stock}</TableBodyCell
+          >{provider.phone}</TableBodyCell
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}>
           <div class="flex justify-center">
             <DotsHorizontalOutline />
             <Dropdown>
               <DropdownItem
-                on:click={() =>
-                  navigateTo(
-                    `products_and_services/item_form?type=update&id=${item.id}`
-                  )}
+                on:click={() => navigateTo("/provider_form/" + provider.id)}
               >
                 Editar</DropdownItem
               >

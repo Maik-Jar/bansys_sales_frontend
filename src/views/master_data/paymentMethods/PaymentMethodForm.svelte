@@ -1,10 +1,9 @@
 <script>
   import { navigateTo } from "svelte-router-spa";
   import Swal from "sweetalert2";
-  import { urls } from "../../lib/utils/urls";
+  import { urls } from "../../../lib/utils/urls";
   import { onMount } from "svelte";
-  import { documentsTypes, providers } from "../../lib/stores/stores";
-  import { hasPermission } from "../../lib/utils/functions";
+  import { hasPermission } from "../../../lib/utils/functions";
   import { Heading, Label, Input, Select, Button, Span } from "flowbite-svelte";
 
   export let currentRoute;
@@ -14,32 +13,21 @@
     input: "dark:bg-gray-50 dark:text-black",
   };
 
-  const provider = Object.seal({
+  const paymentMethod = Object.seal({
     id: null,
     name: null,
-    document_type: 1,
-    document_id: null,
-    phone: null,
-    address: null,
-    email: null,
+    status: true,
   });
 
   let isEditable = false;
 
-  function updateProvidersList() {
-    fetch(urls.backendRoute + urls.providersListEndPoint).then(async (res) => {
-      const providers_list = await res.json();
-      providers.set(providers_list);
-    });
-  }
-
-  function getProvider() {
+  function getPaymentMethod() {
     if (isEditable) {
       const token = JSON.parse(localStorage.getItem("token"));
       fetch(
         urls.backendRoute +
-          urls.providersEndPoint +
-          `?provider_id=${currentRoute.queryParams.id}`,
+          urls.paymentsMethodsEndpoint +
+          `?payment_method_id=${currentRoute.queryParams.id}`,
         {
           headers: {
             Authorization: `Token ${token.token}`,
@@ -49,13 +37,9 @@
         .then(async (res) => {
           if (res.ok) {
             const data = await res.json();
-            provider.id = data.id;
-            provider.name = data.name;
-            provider.document_type = data.document_type;
-            provider.document_id = data.document_id;
-            provider.phone = data.phone;
-            provider.address = data.address;
-            provider.email = data.email;
+            paymentMethod.id = data.id;
+            paymentMethod.name = data.name;
+            paymentMethod.status = data.status;
           }
         })
         .catch((error) => {
@@ -64,10 +48,9 @@
     }
   }
 
-  function createProvider() {
-    let providerToSave = { ...provider };
+  function createPaymentMethod() {
     Swal.fire({
-      title: "¿Quieres crear este nuevo proveedor?",
+      title: "¿Quieres crear este nuevo método de pago?",
       showDenyButton: true,
       showCancelButton: true,
       confirmButtonText: "Si",
@@ -76,22 +59,22 @@
       /* Read more about isConfirmed, isDenied below */
       if (result.isConfirmed) {
         const token = JSON.parse(localStorage.getItem("token"));
-        fetch(urls.backendRoute + urls.providersEndPoint, {
+        fetch(urls.backendRoute + urls.paymentsMethodsEndpoint, {
           method: "post",
           headers: {
             Accept: "application/json",
             "Content-Type": "application/json",
             Authorization: `Token ${token.token}`,
           },
-          body: JSON.stringify(providerToSave),
+          body: JSON.stringify(paymentMethod),
         })
           .then(async (res) => {
             if (res.ok) {
               const data = await res.json();
-              provider.id = data.id;
-              Swal.fire("¡Nuevo proveedor creado!", "", "success");
+              paymentMethod.id = data.id;
+
+              Swal.fire("¡Nuevo método de pago creado!", "", "success");
               isEditable = true;
-              updateProvidersList();
             } else {
               const message = await res.json();
               Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
@@ -108,8 +91,7 @@
     });
   }
 
-  function updateProvider() {
-    let providerToSave = { ...provider };
+  function updatePaymentMethod() {
     Swal.fire({
       title: "¿Quieres guardar los datos?",
       showDenyButton: true,
@@ -121,8 +103,8 @@
         const token = JSON.parse(localStorage.getItem("token"));
         fetch(
           urls.backendRoute +
-            urls.providersEndPoint +
-            `?provider_id=${provider.id}`,
+            urls.paymentsMethodsEndpoint +
+            `?payment_method_id=${paymentMethod.id}`,
           {
             method: "put",
             headers: {
@@ -130,13 +112,12 @@
               "Content-Type": "application/json",
               Authorization: `Token ${token.token}`,
             },
-            body: JSON.stringify(providerToSave),
+            body: JSON.stringify(paymentMethod),
           }
         )
           .then(async (res) => {
             if (res.ok) {
               Swal.fire("¡Datos guardados!", "", "success");
-              updateProvidersList();
             } else {
               const message = await res.json();
               Swal.fire("Solicitud incorrecta.", `${message.detail}`, "error");
@@ -155,22 +136,23 @@
   onMount(async () => {
     isEditable =
       (await currentRoute.queryParams.type) == "update" ? true : false;
-    getProvider();
+    getPaymentMethod();
   });
 </script>
 
 <form
-  id="form_provider"
+  id="form_paymentMethod"
   class="pl-0 p-4 relative"
   on:submit|preventDefault|stopPropagation={isEditable
-    ? updateProvider
-    : createProvider}
+    ? updatePaymentMethod
+    : createPaymentMethod}
 >
   <div
     class="flex justify-start pb-5 mb-2 border-b-4 border-gray-100 dark:border-gray-400"
   >
     <Heading tag="h4" class="w-1/2 {customColorsClassDark.label} self-end"
-      >Código: <Span highlight>{provider.id ? provider.id : ""}</Span></Heading
+      >Código: <Span highlight>{paymentMethod.id ? paymentMethod.id : ""}</Span
+      ></Heading
     >
   </div>
   <Heading tag="h3" class={"dark:text-black"}>Información General</Heading>
@@ -179,83 +161,37 @@
   >
     <div>
       <Label for="name" class="block mb-2 {customColorsClassDark.label}"
-        >Nombre Completo</Label
+        >Nombre</Label
       >
       <Input
         id="name"
         class="capitalize {customColorsClassDark.input}"
-        bind:value={provider.name}
+        bind:value={paymentMethod.name}
         required
-      />
-    </div>
-    <div>
-      <Label for="email" class="block mb-2 {customColorsClassDark.label}"
-        >Email (opcional)</Label
-      >
-      <Input
-        id="email"
-        class={customColorsClassDark.input}
-        type="email"
-        bind:value={provider.email}
       />
     </div>
     <Label class={customColorsClassDark.label}
-      >Tipo de documento
+      >Status
       <Select
         class="mt-2 {customColorsClassDark.input}"
-        bind:value={provider.document_type}
+        bind:value={paymentMethod.status}
         required
-        on:change={() =>
-          provider.document_type === 1 ? (provider.document_id = null) : null}
       >
-        {#each $documentsTypes as { id, name }}
-          <option value={id}>{name}</option>
-        {/each}
+        <option value={true}>Activo</option>
+        <option value={false}>Inactivo</option>
       </Select>
     </Label>
-    <div>
-      <Label for="document_id" class="block mb-2 {customColorsClassDark.label}"
-        >No. Documento</Label
-      >
-      <Input
-        id="document_id"
-        class={customColorsClassDark.input}
-        placeholder="No. Documento sin guiones"
-        bind:value={provider.document_id}
-        required={provider.document_type === 1 ? false : true}
-        disabled={provider.document_type === 1 ? true : false}
-      />
-    </div>
-    <div>
-      <Label for="phone" class="block mb-2 {customColorsClassDark.label}"
-        >Teléfono / Celular</Label
-      >
-      <Input
-        id="phone"
-        type="number"
-        class={customColorsClassDark.input}
-        bind:value={provider.phone}
-        required
-      />
-    </div>
-    <div>
-      <Label for="address" class="block mb-2 {customColorsClassDark.label}"
-        >Dirección (opcional)</Label
-      >
-      <Input
-        id="address"
-        class={customColorsClassDark.input}
-        type="text"
-        bind:value={provider.address}
-      />
-    </div>
   </div>
 </form>
 <div class="flex space-x-3 mt-3">
-  <Button color="dark" on:click={() => navigateTo("/providers/providers_list")}
+  <Button
+    color="dark"
+    on:click={() => navigateTo("master_data/payments_methods_list")}
     >Volver</Button
   >
-  {#if hasPermission("point_of_sales.add_provider") || hasPermission("point_of_sales.change_provider")}
-    <Button color="green" type="submit" form="form_provider">Guardar</Button>
+  {#if hasPermission("master_data.add_paymentmethod") || hasPermission("master_data.change_paymentmethod")}
+    <Button color="green" type="submit" form="form_paymentMethod"
+      >Guardar</Button
+    >
   {/if}
 </div>

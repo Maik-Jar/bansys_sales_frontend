@@ -170,14 +170,15 @@
       size="sm"
       color="blue"
       pill
-      on:click={() => navigateTo("/quotation_form")}>Nueva Cotización</Button
+      on:click={() => navigateTo("/sales/quotation_form?type=new")}
+      >Nueva Cotización</Button
     >
   {/if}
 </div>
 <Table
   shadow
   hoverable={true}
-  divClass={"relative h-[18rem] xl:h-[22rem] 2xl:h-[40rem] overflow-y-auto mb-5"}
+  divClass={"relative h-[18rem] xl:h-[22rem] 2xl:h-[40rem] overflow-y-auto mb-5 bg-white"}
 >
   <TableHead class={"sticky top-0 w-full"}>
     <TableHeadCell scope="col" class={"text-center"}>#</TableHeadCell>
@@ -231,7 +232,10 @@
             <DotsHorizontalOutline />
             <Dropdown>
               <DropdownItem
-                on:click={() => navigateTo("/quotation_form/" + quotation.id)}
+                on:click={() =>
+                  navigateTo(
+                    `/sales/quotation_form/?type=update&id=${quotation.id}`
+                  )}
               >
                 Editar</DropdownItem
               >

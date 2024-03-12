@@ -110,7 +110,8 @@
       size="sm"
       color="blue"
       pill
-      on:click={() => navigateTo("/provider_form")}>Nuevo proveedor</Button
+      on:click={() => navigateTo("providers/provider_form?type=new")}
+      >Nuevo proveedor</Button
     >
   {/if}
 </div>
@@ -142,7 +143,7 @@
             .name}</TableBodyCell
         >
         <TableBodyCell class={"w-[10%] p-2 text-center"}
-          >{provider.document_id}</TableBodyCell
+          >{provider.document_id ? provider.document_id : ""}</TableBodyCell
         >
         <TableBodyCell class={"w-[12%] p-2 text-center"}
           >{provider.phone}</TableBodyCell
@@ -152,7 +153,10 @@
             <DotsHorizontalOutline />
             <Dropdown>
               <DropdownItem
-                on:click={() => navigateTo("/provider_form/" + provider.id)}
+                on:click={() =>
+                  navigateTo(
+                    `providers/provider_form?type=update&id=${provider.id}`
+                  )}
               >
                 Editar</DropdownItem
               >

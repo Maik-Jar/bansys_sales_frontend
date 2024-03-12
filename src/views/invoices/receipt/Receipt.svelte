@@ -1,6 +1,7 @@
 <script>
   import { urls } from "../../../lib/utils/urls";
   import { onMount } from "svelte";
+  import { receipts } from "../../../lib/stores/stores";
   import {
     Label,
     Input,
@@ -24,35 +25,12 @@
     input: "dark:bg-gray-50 dark:text-black",
   };
 
-  let receiptObjectsList = [];
   let selectedReceipt = 1;
 
   $: if (selectedReceipt) {
-    receipt = receiptObjectsList.find((e) => e.id == selectedReceipt);
+    receipt = $receipts.find((e) => e.id == selectedReceipt);
     tax = receipt?.tax?.percentage;
   }
-
-  function getReceipt() {
-    const token = JSON.parse(localStorage.getItem("token"));
-    fetch(urls.backendRoute + urls.receipt, {
-      headers: {
-        Authorization: `Token ${token.token}`,
-      },
-    })
-      .then(async (res) => {
-        if (res.ok) {
-          const data = await res.json();
-          receiptObjectsList = data;
-        }
-      })
-      .catch((error) => {
-        console.log(error.message);
-      });
-  }
-
-  onMount(() => {
-    getReceipt();
-  });
 </script>
 
 <Label class={customColorsClassDark.label}
@@ -63,7 +41,7 @@
     required={!isEditable}
     disabled={isEditable}
   >
-    {#each receiptObjectsList as { id, name }}
+    {#each $receipts as { id, name }}
       <option value={id}>{name}</option>
     {/each}
   </Select>

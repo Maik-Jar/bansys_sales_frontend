@@ -93,7 +93,7 @@
       fetch(
         urls.backendRoute +
           urls.invoicesEndPoint +
-          `?invoice_header_id=${currentRoute.namedParams.id}`,
+          `?invoice_header_id=${currentRoute.queryParams.id}`,
         {
           headers: {
             Authorization: `Token ${token.token}`,
@@ -333,14 +333,11 @@
 
   function calculateTax() {
     totalTax = 0;
-
-    if (isEditable) {
-      totalTax = (subTotal - totalDiscoint) * Number(invoiceHeader?.tax);
-      return;
-    }
-    // console.log(receipt?.tax?.percentage);
-
-    // totalTax = (subTotal - totalDiscoint) * receipt?.tax?.percentage;
+    totalTax = (subTotal - totalDiscoint) * Number(invoiceHeader?.tax);
+    // if (isEditable) {
+    //   totalTax = (subTotal - totalDiscoint) * Number(invoiceHeader?.tax);
+    //   return;
+    // }
   }
 
   function calculateTotal() {
@@ -425,7 +422,8 @@
   }
 
   onMount(async () => {
-    isEditable = (await currentRoute.namedParams.id) ? true : false;
+    isEditable =
+      (await currentRoute.queryParams.type) == "update" ? true : false;
     getInvoice();
   });
 </script>
@@ -648,7 +646,7 @@
 </form>
 <hr class="my-2 bg-gray-400 h-1" />
 <div class="flex space-x-3 mt-5">
-  <Button color="dark" on:click={() => navigateTo("/invoices_manager")}
+  <Button color="dark" on:click={() => navigateTo("/sales/invoices_list")}
     >Volver</Button
   >
   {#if hasPermission("point_of_sales.add_invoiceheader") || hasPermission("point_of_sales.change_invoiceheader")}

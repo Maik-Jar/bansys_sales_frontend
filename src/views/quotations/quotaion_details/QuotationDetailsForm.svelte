@@ -58,7 +58,7 @@
 
   function getItems() {
     const token = JSON.parse(localStorage.getItem("token"));
-    fetch(urls.backendRoute + urls.itemsList, {
+    fetch(urls.backendRoute + urls.itemsListEndPoint, {
       method: "get",
       headers: {
         Authorization: `Token ${token.token}`,

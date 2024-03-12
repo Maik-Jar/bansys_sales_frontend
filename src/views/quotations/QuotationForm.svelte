@@ -88,7 +88,7 @@
       fetch(
         urls.backendRoute +
           urls.quotaionsEndPoint +
-          `?quotation_header_id=${currentRoute.namedParams.id}`,
+          `?quotation_header_id=${currentRoute.queryParams.id}`,
         {
           headers: {
             Authorization: `Token ${token.token}`,
@@ -371,7 +371,8 @@
   }
 
   onMount(async () => {
-    isEditable = (await currentRoute.namedParams.id) ? true : false;
+    isEditable =
+      (await currentRoute.queryParams.type) == "update" ? true : false;
     getQuotation();
   });
 </script>
@@ -552,7 +553,7 @@
 </form>
 <hr class="my-2 bg-gray-400 h-1" />
 <div class="flex space-x-3 mt-5">
-  <Button color="dark" on:click={() => navigateTo("/quotations_manager")}
+  <Button color="dark" on:click={() => navigateTo("/sales/quotations_list")}
     >Volver</Button
   >
   {#if hasPermission("point_of_sales.add_quotationheader") || hasPermission("point_of_sales.change_quotationheader")}

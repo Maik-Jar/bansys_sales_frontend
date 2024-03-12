@@ -2,19 +2,41 @@ const backendRoute = {
   backendRoute: import.meta.env.VITE_BACKEND_SERVER_ROUTE,
 };
 
+const accounting = {};
+
+const customers = {
+  customersEndPoint: "customers/api/customers",
+};
+
+const inventory = {};
+
+const master_data = {
+  documentsTypesEndPoint: "master_data/api/documents_types",
+  taxesEndPoint: "master_data/api/taxes",
+  receiptEndPoint: "master_data/api/receipts",
+  salesTypesEndpoint: "master_data/api/sales_types",
+  paymentsMethodsEndpoint: "master_data/api/payments_methods",
+  documentsTypesListEndPoint: "master_data/api/documents_types_list",
+  taxesListEndPoint: "master_data/api/taxes_list",
+  receiptListEndPoint: "master_data/api/receipts_list",
+  salesTypesListEndpoint: "master_data/api/sales_types_list",
+  paymentsMethodsListEndpoint: "master_data/api/payments_methods_list",
+};
+
+const products_and_services = {
+  itemsEndPoint: "products_and_services/api/items",
+  itemsListEndPoint: "products_and_services/api/items_list",
+};
+
+const purchases_and_providers = {
+  providersEndPoint: "purchases_and_providers/api/providers",
+  providersListEndPoint: "purchases_and_providers/api/providers_list",
+};
+
 const pointSales = {
   login: "point_of_sales/api/login",
-  customersEndPoint: "point_of_sales/api/customers",
-  providersEndPoint: "point_of_sales/api/providers",
-  itemsEndPoint: "point_of_sales/api/items",
   invoicesEndPoint: "point_of_sales/api/invoices",
   quotaionsEndPoint: "point_of_sales/api/quotations",
-  documentsTypesEndPoint: "point_of_sales/api/documents_types",
-  taxes: "point_of_sales/api/taxes",
-  receipt: "point_of_sales/api/receipts",
-  itemsList: "point_of_sales/api/items_list",
-  salesTypesEndpoint: "point_of_sales/api/sales_types",
-  paymentsMethodsEndpoint: "point_of_sales/api/payments_methods",
   printInvoiceEndpoint: "point_of_sales/api/print/print_invoice",
   printInvoice60mmEndpoint: "point_of_sales/api/print/print_invoice_60mm",
   printQuotationEndpoint: "point_of_sales/api/print/print_quotation",
@@ -24,4 +46,10 @@ const pointSales = {
 export const urls = {
   ...backendRoute,
   ...pointSales,
+  ...customers,
+  ...master_data,
+  ...inventory,
+  ...purchases_and_providers,
+  ...products_and_services,
+  ...accounting,
 };
