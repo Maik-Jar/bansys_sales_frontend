@@ -87,7 +87,7 @@
       const token = JSON.parse(localStorage.getItem("token"));
       fetch(
         urls.backendRoute +
-          urls.quotaionsEndPoint +
+          urls.quotationsEndPoint +
           `?quotation_header_id=${currentRoute.queryParams.id}`,
         {
           headers: {
@@ -146,7 +146,7 @@
       /* Read more about isConfirmed, isDenied below */
       if (result.isConfirmed) {
         const token = JSON.parse(localStorage.getItem("token"));
-        fetch(urls.backendRoute + urls.quotaionsEndPoint, {
+        fetch(urls.backendRoute + urls.quotationsEndPoint, {
           method: "post",
           headers: {
             Accept: "application/json",
@@ -205,7 +205,7 @@
         const token = JSON.parse(localStorage.getItem("token"));
         fetch(
           urls.backendRoute +
-            urls.quotaionsEndPoint +
+            urls.quotationsEndPoint +
             `?quotation_header_id=${quotationHeader.id}`,
           {
             method: "put",
@@ -250,7 +250,7 @@
         const token = JSON.parse(localStorage.getItem("token"));
         fetch(
           urls.backendRoute +
-            urls.quotaionsEndPoint +
+            urls.quotationsEndPoint +
             `?quotation_header_id=${quotationHeader.id}`,
           {
             method: "delete",

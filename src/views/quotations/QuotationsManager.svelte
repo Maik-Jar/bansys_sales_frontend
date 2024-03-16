@@ -32,7 +32,7 @@
     const token = JSON.parse(localStorage.getItem("token"));
     fetch(
       urls.backendRoute +
-        urls.quotaionsEndPoint +
+        urls.quotationsEndPoint +
         `?search=${searchTerm}&page=${page}`,
       {
         method: "get",

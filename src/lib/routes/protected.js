@@ -21,6 +21,8 @@ import TaxManager from "../../views/master_data/taxes/TaxManager.svelte";
 import TaxForm from "../../views/master_data/taxes/TaxForm.svelte";
 import ReceiptManager from "../../views/master_data/receipts/ReceiptManager.svelte";
 import ReceiptForm from "../../views/master_data/receipts/ReceiptForm.svelte";
+import PaymentsManager from "../../views/accounting/payments/PaymentsManager.svelte";
+import PaymentForm from "../../views/accounting/payments/PaymentForm.svelte";
 import { getItem } from "../utils/functions";
 
 function isAuthenticated() {
@@ -156,6 +158,29 @@ const protectedRoutes = [
       {
         name: "receipt_form",
         component: ReceiptForm,
+      },
+    ],
+  },
+  {
+    name: "/accounts_receivable",
+    layout: MainAdminLayout,
+    onlyIf: { guard: isAuthenticated, redirect: "/login" },
+    nestedRoutes: [
+      {
+        name: "payments_list",
+        component: PaymentsManager,
+      },
+      {
+        name: "payment_form",
+        component: PaymentForm,
+      },
+      {
+        name: "customer_balances_list",
+        component: QuotationsManager,
+      },
+      {
+        name: "customer_balance_form",
+        component: QuotationForm,
       },
     ],
   },

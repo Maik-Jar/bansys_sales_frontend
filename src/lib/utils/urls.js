@@ -2,7 +2,10 @@ const backendRoute = {
   backendRoute: import.meta.env.VITE_BACKEND_SERVER_ROUTE,
 };
 
-const accounting = {};
+const accounting = {
+  paymentsEndPoint: "accounting/api/payments",
+  printPaymentInvoice: "accounting/api/print/payment_invoice_a4",
+};
 
 const customers = {
   customersEndPoint: "customers/api/customers",
@@ -36,7 +39,8 @@ const purchases_and_providers = {
 const pointSales = {
   login: "point_of_sales/api/login",
   invoicesEndPoint: "point_of_sales/api/invoices",
-  quotaionsEndPoint: "point_of_sales/api/quotations",
+  invoices_listEndPoint: "point_of_sales/api/invoices_list",
+  quotationsEndPoint: "point_of_sales/api/quotations",
   printInvoiceEndpoint: "point_of_sales/api/print/print_invoice",
   printInvoice60mmEndpoint: "point_of_sales/api/print/print_invoice_60mm",
   printQuotationEndpoint: "point_of_sales/api/print/print_quotation",

@@ -186,18 +186,45 @@
               />
             </SidebarDropdownWrapper>
           {/if}
+          {#if hasPermission("point_of_sales.view_payment")}
+            <SidebarDropdownWrapper label="Cuentas por cobrar">
+              <svelte:fragment slot="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1.6em"
+                  height="1.6em"
+                  viewBox="0 0 24 24"
+                  {...$$props}
+                  ><path
+                    fill="currentColor"
+                    d="M11 8c0 2.21-1.79 4-4 4s-4-1.79-4-4s1.79-4 4-4s4 1.79 4 4m0 6.72V20H0v-2c0-2.21 3.13-4 7-4c1.5 0 2.87.27 4 .72M24 20H13V3h11zm-8-8.5a2.5 2.5 0 0 1 5 0a2.5 2.5 0 0 1-5 0M22 7a2 2 0 0 1-2-2h-3c0 1.11-.89 2-2 2v9a2 2 0 0 1 2 2h3c0-1.1.9-2 2-2z"
+                  /></svg
+                >
+              </svelte:fragment>
+              <SidebarDropdownItem
+                label="Gestión de pagos"
+                on:click={() =>
+                  navigateTo("/accounts_receivable/payments_list")}
+              />
+              <SidebarDropdownItem
+                label="Saldo de clientes"
+                on:click={() =>
+                  navigateTo("/accounts_receivable/customer_balances_list")}
+              />
+            </SidebarDropdownWrapper>
+          {/if}
           {#if hasPermission("master_data.view_documenttype")}
             <SidebarDropdownWrapper label="Master Data">
               <svelte:fragment slot="icon">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="1em"
-                  height="1em"
-                  viewBox="0 0 448 512"
+                  width="1.6em"
+                  height="1.6em"
+                  viewBox="0 0 24 24"
                   {...$$props}
                   ><path
                     fill="currentColor"
-                    d="M448 73.143v45.714C448 159.143 347.667 192 224 192S0 159.143 0 118.857V73.143C0 32.857 100.333 0 224 0s224 32.857 224 73.143M448 176v102.857C448 319.143 347.667 352 224 352S0 319.143 0 278.857V176c48.125 33.143 136.208 48.572 224 48.572S399.874 209.143 448 176m0 160v102.857C448 479.143 347.667 512 224 512S0 479.143 0 438.857V336c48.125 33.143 136.208 48.572 224 48.572S399.874 369.143 448 336"
+                    d="M12 3C7.58 3 4 4.79 4 7s3.58 4 8 4s8-1.79 8-4s-3.58-4-8-4M4 9v3c0 2.21 3.58 4 8 4s8-1.79 8-4V9c0 2.21-3.58 4-8 4s-8-1.79-8-4m0 5v3c0 2.21 3.58 4 8 4s8-1.79 8-4v-3c0 2.21-3.58 4-8 4s-8-1.79-8-4"
                   /></svg
                 >
               </svelte:fragment>
