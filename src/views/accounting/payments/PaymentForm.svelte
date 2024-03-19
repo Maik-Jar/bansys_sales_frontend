@@ -44,6 +44,7 @@
   let inactivateModal = false;
   let invoiceModal = false;
   let invoiceNumber = null;
+  $: console.log(isEditable);
 
   function getPayment() {
     if (isEditable) {
@@ -351,7 +352,6 @@
           type="number"
           bind:value={payment.amount}
           disabled={!payment.status || !payment.invoice}
-          readonly={isEditable}
           required
         />
       </ButtonGroup>

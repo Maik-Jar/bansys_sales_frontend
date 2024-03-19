@@ -44,6 +44,7 @@
     user_created: null,
     user_updated: null,
     status: true,
+    inactive_comment: "",
   });
 
   let customer = Object.seal({
@@ -60,7 +61,7 @@
   let pending = 0;
   let subTotal = 0;
   let totalTax = 0;
-  let totalDiscoint = 0;
+  let totalDiscount = 0;
   let totalAmount = 0;
   let totalPayments = 0;
   let getCustomerForIdonChild;
@@ -68,6 +69,7 @@
   let assignReceipt;
   let discountModal = false;
   let paymentsModal = false;
+  let inactivateModal = false;
 
   $: activeInvoiceDetails = customer?.id ? true : false;
   $: if (invoiceDetails) {
@@ -128,6 +130,7 @@
             invoiceHeader.user_created = data.user_created;
             invoiceHeader.user_updated = data.user_updated;
             invoiceHeader.status = data.status;
+            invoiceHeader.inactive_comment = data.inactive_comment;
 
             getCustomerForIdonChild();
             calculatePending();
@@ -275,11 +278,15 @@
               "Content-Type": "application/json",
               Authorization: `Token ${token.token}`,
             },
+            body: JSON.stringify({
+              inactivate_comment: invoiceHeader.inactive_comment,
+            }),
           }
         )
           .then(async (res) => {
             if (res.ok) {
               invoiceHeader.status = false;
+              inactivateModal = false;
               Swal.fire("¡Factura inactivada!", "", "success");
             } else {
               const message = await res.json();
@@ -310,17 +317,17 @@
   }
 
   function calculateDiscount() {
-    totalDiscoint = 0;
+    totalDiscount = 0;
     if (invoiceHeader.discount < 0 || invoiceHeader.discount == 0) {
-      return totalDiscoint;
+      return totalDiscount;
     }
     // prettier-ignore
     if (!Number.isInteger(invoiceHeader.discount) && (invoiceHeader.discount > 0 && invoiceHeader.discount < 1)) {
         // prettier-ignore
-        totalDiscoint = (subTotal * invoiceHeader.discount)
+        totalDiscount = (subTotal * invoiceHeader.discount)
       } else {
         // prettier-ignore
-        totalDiscoint = invoiceHeader.discount ? invoiceHeader.discount : 0.00
+        totalDiscount = invoiceHeader.discount ? invoiceHeader.discount : 0.00
       }
   }
 
@@ -333,7 +340,7 @@
 
   function calculateTax() {
     totalTax = 0;
-    totalTax = (subTotal - totalDiscoint) * Number(invoiceHeader?.tax);
+    totalTax = (subTotal - totalDiscount) * Number(invoiceHeader?.tax);
     // if (isEditable) {
     //   totalTax = (subTotal - totalDiscoint) * Number(invoiceHeader?.tax);
     //   return;
@@ -342,7 +349,7 @@
 
   function calculateTotal() {
     totalAmount = 0;
-    totalAmount = subTotal - totalDiscoint + totalTax;
+    totalAmount = subTotal - totalDiscount + totalTax;
   }
 
   function validateCustomer() {
@@ -523,6 +530,21 @@
         bind:value={invoiceHeader.comment}
         disabled={!invoiceHeader.status}
       />
+      {#if !invoiceHeader.status}
+        <Label
+          for="inactivate_comment"
+          class="mb-2 {customColorsClassDark.label} text-rose-500 dark:text-rose-500"
+          >Motivo de inactivación</Label
+        >
+        <Textarea
+          class="border-rose-500 dark:border-rose-500 {customColorsClassDark.input}"
+          id="inactivate_comment"
+          rows="4"
+          name="message"
+          bind:value={invoiceHeader.inactive_comment}
+          readonly
+        />
+      {/if}
     </div>
     <div class="flex flex-col space-y-3 justify-self-end min-w-[70%]">
       <Label class={customColorsClassDark.label}
@@ -570,7 +592,7 @@
             >{Intl.NumberFormat("es-DO", {
               style: "currency",
               currency: "DOP",
-            }).format(totalDiscoint)}</Span
+            }).format(totalDiscount)}</Span
           >
         </div>
         <div class="flex justify-between">
@@ -661,7 +683,7 @@
     <Button
       color="red"
       type="button"
-      on:click={inactivateInvoice}
+      on:click={() => (inactivateModal = true)}
       disabled={!invoiceHeader.status || !invoiceHeader.id}>Inactivar</Button
     >
   {/if}
@@ -720,4 +742,33 @@
       >Cerrar</Button
     >
   </svelte:fragment>
+</Modal>
+
+<Modal bind:open={inactivateModal} size="xs" autoclose={false} class="w-full">
+  <form
+    id="form_inactivate"
+    class="flex flex-col space-y-6"
+    on:submit|preventDefault|stopPropagation={inactivateInvoice}
+  >
+    <h3 class="mb-4 text-xl font-medium text-gray-900 dark:text-white">
+      Motivo de inactivación
+    </h3>
+    <Label for="inactivate_comment" class="mb-2">
+      Especifique el motivo por el cual inactiva el pago.</Label
+    >
+    <Textarea
+      class="uppercase {customColorsClassDark.input}"
+      id="inactivate_comment"
+      rows="4"
+      name="message"
+      bind:value={invoiceHeader.inactive_comment}
+    />
+    <Button
+      type="submit"
+      color="green"
+      form="form_inactivate"
+      disabled={!invoiceHeader.inactive_comment ||
+        invoiceHeader.inactive_comment.length < 15}>Confirmar</Button
+    >
+  </form>
 </Modal>
