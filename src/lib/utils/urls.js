@@ -11,7 +11,10 @@ const customers = {
   customersEndPoint: "customers/api/customers",
 };
 
-const inventory = {};
+const inventory = {
+  inputsEndPoint: "inventory/api/inputs",
+  outputsEndPoint: "inventory/api/outputs",
+};
 
 const master_data = {
   documentsTypesEndPoint: "master_data/api/documents_types",

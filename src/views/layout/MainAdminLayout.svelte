@@ -213,6 +213,31 @@
               />
             </SidebarDropdownWrapper>
           {/if}
+          {#if hasPermission("inventory.view_input")}
+            <SidebarDropdownWrapper label="Inventario">
+              <svelte:fragment slot="icon">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="1.6em"
+                  height="1.6em"
+                  viewBox="0 0 24 24"
+                  {...$$props}
+                  ><path
+                    fill="currentColor"
+                    d="M6 19h2v2H6zm6-16L2 8v13h2v-8h16v8h2V8zm-4 8H4V9h4zm6 0h-4V9h4zm6 0h-4V9h4zM6 15h2v2H6zm4 0h2v2h-2zm0 4h2v2h-2zm4 0h2v2h-2z"
+                  /></svg
+                >
+              </svelte:fragment>
+              <SidebarDropdownItem
+                label="Entradas Inventario"
+                on:click={() => navigateTo("/inventory/inputs_list")}
+              />
+              <SidebarDropdownItem
+                label="Salidas Inventario"
+                on:click={() => navigateTo("/inventory/outputs_list")}
+              />
+            </SidebarDropdownWrapper>
+          {/if}
           {#if hasPermission("master_data.view_documenttype")}
             <SidebarDropdownWrapper label="Master Data">
               <svelte:fragment slot="icon">
