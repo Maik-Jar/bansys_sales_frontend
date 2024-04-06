@@ -1,5 +1,6 @@
 <script>
   import { Router } from "svelte-router-spa";
+  import { navigateTo } from "svelte-router-spa";
   import { routes } from "./routes";
   import {
     providers,
@@ -10,6 +11,7 @@
     paymentMethods,
     salesTypes,
   } from "./lib/stores/stores";
+  import { onMount } from "svelte";
 
   if (!localStorage.getItem("token")) {
     localStorage.setItem("token", "");
@@ -25,6 +27,27 @@
   $receipts;
   $paymentMethods;
   $salesTypes;
+  let timeout;
+
+  function logout() {
+    if (JSON.parse(localStorage.getItem("isLogin"))) {
+      localStorage.setItem("isLogin", JSON.stringify(false));
+      localStorage.setItem("token", "");
+      navigateTo("login");
+    }
+  }
+
+  function resetTimeout() {
+    clearTimeout(timeout);
+    timeout = setTimeout(logout, 600000);
+  }
+
+  onMount(() => {
+    resetTimeout();
+    document.addEventListener("mousemove", resetTimeout);
+    document.addEventListener("mousedown", resetTimeout);
+    document.addEventListener("keypress", resetTimeout);
+  });
 </script>
 
 <Router {routes} />

@@ -105,7 +105,7 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_customer")}
+  {#if hasPermission("customers.add_customer")}
     <Button
       size="sm"
       color="blue"
@@ -173,7 +173,6 @@
     {/each}
   </TableBody>
 </Table>
-<!-- </div> -->
 <div class="flex mt-4 space-x-3 justify-end">
   <PaginationItem on:click={previousPage}>Previous</PaginationItem>
   <PaginationItem on:click={nextPage}>Next</PaginationItem>

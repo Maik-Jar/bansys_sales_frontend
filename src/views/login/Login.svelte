@@ -9,6 +9,11 @@
     password: null,
   });
 
+  const customColorsClassDark = {
+    label: "dark:text-gray-500",
+    input: "dark:bg-gray-50 dark:text-black",
+  };
+
   function login() {
     fetch(urls.backendRoute + urls.login, {
       method: "post",
@@ -44,20 +49,26 @@
   </div>
   <div class="flex flex-col justify-center mb-6 w-2/6">
     <div class="mb-6">
-      <Label for="username" class="mb-2 dark:text-gray-500">Usuario</Label>
+      <Label for="username" class="mb-2 {customColorsClassDark.label}"
+        >Usuario</Label
+      >
       <Input
         type="text"
         id="username"
+        class={customColorsClassDark.input}
         placeholder="username"
         bind:value={credentials.username}
         required
       />
     </div>
     <div class="mb-10">
-      <Label for="password" class="mb-2 dark:text-gray-500">Contraseña</Label>
+      <Label for="password" class="mb-2 {customColorsClassDark.label}"
+        >Contraseña</Label
+      >
       <Input
         type="password"
         id="password"
+        class={customColorsClassDark.input}
         placeholder="•••••••••"
         bind:value={credentials.password}
         required

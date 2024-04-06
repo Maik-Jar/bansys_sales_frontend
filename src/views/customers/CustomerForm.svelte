@@ -248,7 +248,7 @@
   <Button color="dark" on:click={() => navigateTo("/customers/customers_list")}
     >Volver</Button
   >
-  {#if hasPermission("point_of_sales.add_customer") || hasPermission("point_of_sales.change_customer")}
+  {#if hasPermission("customers.add_customer") || hasPermission("customers.change_customer")}
     <Button color="green" type="submit" form="form_customer">Guardar</Button>
   {/if}
 </div>

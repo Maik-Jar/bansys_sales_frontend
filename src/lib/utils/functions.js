@@ -1,3 +1,5 @@
+import { navigateTo } from "svelte-router-spa";
+
 export function isNumeric(str) {
   return /^\d+$/.test(str);
 }

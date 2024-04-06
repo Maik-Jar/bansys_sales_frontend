@@ -22,12 +22,14 @@
   } from "flowbite-svelte";
 
   export let currentRoute;
+
   let colorIcon =
     localStorage.getItem("color-theme") == "dark"
       ? "/src/assets/bansys-sales-white.svg"
       : "/src/assets/bansys-sales.svg";
 
   $: userInfo = JSON.parse(localStorage.getItem("token"));
+  $: activeUrl = currentRoute.path;
 
   function signout() {
     localStorage.setItem("isLogin", JSON.stringify(false));
@@ -42,16 +44,23 @@
   }
 </script>
 
-<div class="h-screen max-h-screen bg-white dark:bg-gray-900">
-  <Navbar let:hidden let:toggle class={"bg-white dark:bg-gray-900"}>
+<div
+  class="h-screen max-h-screen bg-white dark:bg-gradient-to-b dark:from-zinc-900 dark:to-zinc-800"
+>
+  <Navbar
+    let:hidden
+    let:toggle
+    fluid
+    class={"bg-white dark:bg-zinc-900 print:hidden"}
+  >
     <NavBrand href="/">
       <span
-        class="ml-5 self-center whitespace-nowrap text-2xl font-semibold dark:text-white"
+        class="ml-5 whitespace-nowrap text-2xl font-semibold dark:text-white"
         >Bansys | Sales</span
       >
     </NavBrand>
 
-    <div class="flex items-center space-x-5 mr-5">
+    <div class="flex space-x-4">
       <DarkMode />
       <Avatar id="avatar-menu" src="/user.svg" />
       <NavHamburger
@@ -73,9 +82,11 @@
     </Dropdown>
   </Navbar>
 
-  <div class=" flex h-[89%] 2xl:h-[92%] w-full">
-    <Sidebar class={"h-full w-72"}>
-      <SidebarWrapper class={"h-full bg-white dark:bg-gray-900"}>
+  <div class=" flex h-[89%] 2xl:h-[93%] w-full">
+    <Sidebar class="h-full w-72 print:hidden" {activeUrl}>
+      <SidebarWrapper
+        class={"h-full bg-white dark:bg-gradient-to-b dark:from-zinc-900 dark:to-zinc-800"}
+      >
         <SidebarGroup>
           <SidebarItem label="/Dashboard">
             <svelte:fragment slot="icon">
@@ -115,15 +126,22 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de facturas"
-                on:click={() => navigateTo("/sales/invoices_list")}
+                href="/sales/invoices_list"
+                active={activeUrl == "/sales/invoices_list"}
               />
               <SidebarDropdownItem
                 label="Gestión de cotizaciones"
-                on:click={() => navigateTo("/sales/quotations_list")}
+                href="/sales/quotations_list"
+                active={activeUrl == "/sales/quotations_list"}
+              />
+              <SidebarDropdownItem
+                label="Reporte de ventas"
+                href="/sales/sales_report_form"
+                active={activeUrl == "/sales/sales_report_form"}
               />
             </SidebarDropdownWrapper>
           {/if}
-          {#if hasPermission("point_of_sales.view_customer")}
+          {#if hasPermission("customers.view_customer")}
             <SidebarDropdownWrapper label="Clientes">
               <svelte:fragment slot="icon">
                 <svg
@@ -140,11 +158,12 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de clientes"
-                on:click={() => navigateTo("/customers/customers_list")}
+                href="/customers/customers_list"
+                active={activeUrl == "/customers/customers_list"}
               />
             </SidebarDropdownWrapper>
           {/if}
-          {#if hasPermission("point_of_sales.view_provider")}
+          {#if hasPermission("purchases_and_providers.view_provider")}
             <SidebarDropdownWrapper label="Proveedores">
               <svelte:fragment slot="icon">
                 <svg
@@ -161,11 +180,12 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de proveedores"
-                on:click={() => navigateTo("/providers/providers_list")}
+                href="/providers/providers_list"
+                active={activeUrl == "/providers/providers_list"}
               />
             </SidebarDropdownWrapper>
           {/if}
-          {#if hasPermission("point_of_sales.view_item")}
+          {#if hasPermission("products_and_services.view_item")}
             <SidebarDropdownWrapper label="Productos & Servicios">
               <svelte:fragment slot="icon">
                 <svg
@@ -182,11 +202,12 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de items"
-                on:click={() => navigateTo("/products_and_services/items_list")}
+                href="/products_and_services/items_list"
+                active={activeUrl == "/products_and_services/items_list"}
               />
             </SidebarDropdownWrapper>
           {/if}
-          {#if hasPermission("point_of_sales.view_payment")}
+          {#if hasPermission("accounting.view_payment")}
             <SidebarDropdownWrapper label="Cuentas por cobrar">
               <svelte:fragment slot="icon">
                 <svg
@@ -203,13 +224,14 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Gestión de pagos"
-                on:click={() =>
-                  navigateTo("/accounts_receivable/payments_list")}
+                href="/accounts_receivable/payments_list"
+                active={activeUrl == "/accounts_receivable/payments_list"}
               />
               <SidebarDropdownItem
                 label="Saldo de clientes"
-                on:click={() =>
-                  navigateTo("/accounts_receivable/customer_balances_list")}
+                href="/accounts_receivable/customer_balances_list"
+                active={activeUrl ==
+                  "/accounts_receivable/customer_balances_list"}
               />
             </SidebarDropdownWrapper>
           {/if}
@@ -230,11 +252,13 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Entradas Inventario"
-                on:click={() => navigateTo("/inventory/inputs_list")}
+                href="/inventory/inputs_list"
+                active={activeUrl == "/inventory/inputs_list"}
               />
               <SidebarDropdownItem
                 label="Salidas Inventario"
-                on:click={() => navigateTo("/inventory/outputs_list")}
+                href="/inventory/outputs_list"
+                active={activeUrl == "/inventory/outputs_list"}
               />
             </SidebarDropdownWrapper>
           {/if}
@@ -255,24 +279,28 @@
               </svelte:fragment>
               <SidebarDropdownItem
                 label="Tipos de documentos"
-                on:click={() => navigateTo("/master_data/document_type_list")}
+                href="/master_data/document_type_list"
+                active={activeUrl == "/master_data/document_type_list"}
               />
               <SidebarDropdownItem
                 label="Métodos de pago"
-                on:click={() =>
-                  navigateTo("/master_data/payments_methods_list")}
+                href="/master_data/payments_methods_list"
+                active={activeUrl == "/master_data/payments_methods_list"}
               />
               <SidebarDropdownItem
                 label="Impuestos"
-                on:click={() => navigateTo("/master_data/taxes_list")}
+                href="/master_data/taxes_list"
+                active={activeUrl == "/master_data/taxes_list"}
               />
               <SidebarDropdownItem
                 label="Tipos de ventas"
-                on:click={() => navigateTo("/master_data/sales_types_list")}
+                href="/master_data/sales_types_list"
+                active={activeUrl == "/master_data/sales_types_list"}
               />
               <SidebarDropdownItem
                 label="Comprobantes"
-                on:click={() => navigateTo("/master_data/receipts_list")}
+                href="/master_data/receipts_list"
+                active={activeUrl == "/master_data/receipts_list"}
               />
             </SidebarDropdownWrapper>
           {/if}

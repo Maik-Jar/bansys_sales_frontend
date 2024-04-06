@@ -27,6 +27,7 @@ import InputManager from "../../views/inventory/inputs/InputManager.svelte";
 import InputForm from "../../views/inventory/inputs/InputForm.svelte";
 import OutputManager from "../../views/inventory/outputs/OutputManager.svelte";
 import OutputForm from "../../views/inventory/outputs/OutputForm.svelte";
+import SalesReport from "../../views/reports/sales/SalesReport.svelte";
 import { getItem } from "../utils/functions";
 
 function isAuthenticated() {
@@ -115,6 +116,10 @@ const protectedRoutes = [
       {
         name: "quotation_form",
         component: QuotationForm,
+      },
+      {
+        name: "sales_report_form",
+        component: SalesReport,
       },
     ],
   },

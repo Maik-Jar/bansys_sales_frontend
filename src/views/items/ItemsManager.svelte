@@ -104,7 +104,7 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_item")}
+  {#if hasPermission("products_and_services.add_item")}
     <Button
       size="sm"
       color="blue"

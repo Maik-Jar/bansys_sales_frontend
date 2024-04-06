@@ -27,6 +27,7 @@ const master_data = {
   receiptListEndPoint: "master_data/api/receipts_list",
   salesTypesListEndpoint: "master_data/api/sales_types_list",
   paymentsMethodsListEndpoint: "master_data/api/payments_methods_list",
+  companyListEndpoint: "master_data/api/company_list",
 };
 
 const products_and_services = {
@@ -48,6 +49,7 @@ const pointSales = {
   printInvoice60mmEndpoint: "point_of_sales/api/print/print_invoice_60mm",
   printQuotationEndpoint: "point_of_sales/api/print/print_quotation",
   printQuotation60mmEndpoint: "point_of_sales/api/print/print_quotation_60mm",
+  printSalesReportEndPoint: "point_of_sales/api/print/sales_report",
 };
 
 export const urls = {
