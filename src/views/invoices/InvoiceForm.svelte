@@ -24,7 +24,7 @@
     DropdownItem,
     Modal,
   } from "flowbite-svelte";
-  import { ChevronDownSolid } from "flowbite-svelte-icons";
+  import { ChevronDownOutline } from "flowbite-svelte-icons";
 
   export let currentRoute;
 
@@ -691,7 +691,7 @@
     color="blue"
     type="button"
     disabled={!invoiceHeader.status || !invoiceHeader.id}
-    >Imprimir<ChevronDownSolid
+    >Imprimir<ChevronDownOutline
       class="w-3 h-3 ms-2 text-white dark:text-white"
     /></Button
   >
