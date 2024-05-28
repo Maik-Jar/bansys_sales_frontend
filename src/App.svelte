@@ -10,6 +10,7 @@
     receipts,
     paymentMethods,
     salesTypes,
+    company,
   } from "./lib/stores/stores";
   import { onMount } from "svelte";
 
@@ -27,6 +28,8 @@
   $receipts;
   $paymentMethods;
   $salesTypes;
+  $company;
+
   let timeout;
 
   function logout() {

@@ -45,9 +45,9 @@ const pointSales = {
   invoicesEndPoint: "point_of_sales/api/invoices",
   invoices_listEndPoint: "point_of_sales/api/invoices_list",
   quotationsEndPoint: "point_of_sales/api/quotations",
-  printInvoiceEndpoint: "point_of_sales/api/print/print_invoice",
+  printInvoiceEndpoint: "point_of_sales/api/invoice_print_data",
   printInvoice60mmEndpoint: "point_of_sales/api/print/print_invoice_60mm",
-  printQuotationEndpoint: "point_of_sales/api/print/print_quotation",
+  printQuotationEndpoint: "point_of_sales/api/quotation_print_data",
   printQuotation60mmEndpoint: "point_of_sales/api/print/print_quotation_60mm",
   printSalesReportEndPoint: "point_of_sales/api/print/sales_report",
 };

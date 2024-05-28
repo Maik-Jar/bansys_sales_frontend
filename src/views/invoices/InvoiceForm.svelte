@@ -25,6 +25,7 @@
     Modal,
   } from "flowbite-svelte";
   import { ChevronDownOutline } from "flowbite-svelte-icons";
+  import InvoicePrintA4 from "./InvoicePrintA4.svelte";
 
   export let currentRoute;
 
@@ -70,6 +71,7 @@
   let discountModal = false;
   let paymentsModal = false;
   let inactivateModal = false;
+  let scrollingModal = false;
 
   $: activeInvoiceDetails = customer?.id ? true : false;
   $: if (invoiceDetails) {
@@ -341,10 +343,6 @@
   function calculateTax() {
     totalTax = 0;
     totalTax = (subTotal - totalDiscount) * Number(invoiceHeader?.tax);
-    // if (isEditable) {
-    //   totalTax = (subTotal - totalDiscoint) * Number(invoiceHeader?.tax);
-    //   return;
-    // }
   }
 
   function calculateTotal() {
@@ -408,23 +406,7 @@
 
   function printInvoice(invoiceID) {
     if (invoiceHeader.status) {
-      window.open(
-        urls.backendRoute +
-          urls.printInvoiceEndpoint +
-          `?invoice_header_id=${invoiceID}&papel_size="A4"`,
-        "_blank"
-      );
-    }
-  }
-
-  function printInvoice60mm(invoiceID) {
-    if (invoiceHeader.status) {
-      window.open(
-        urls.backendRoute +
-          urls.printInvoice60mmEndpoint +
-          `?invoice_header_id=${invoiceID}&papel_size="60mm"`,
-        "_blank"
-      );
+      window.open(`/print/invoice?invoiceId=${invoiceID}`, "_blank");
     }
   }
 
@@ -690,19 +672,9 @@
   <Button
     color="blue"
     type="button"
-    disabled={!invoiceHeader.status || !invoiceHeader.id}
-    >Imprimir<ChevronDownOutline
-      class="w-3 h-3 ms-2 text-white dark:text-white"
-    /></Button
+    on:click={() => printInvoice(invoiceHeader.id)}
+    disabled={!invoiceHeader.status || !invoiceHeader.id}>Imprimir</Button
   >
-  <Dropdown>
-    <DropdownItem on:click={() => printInvoice(invoiceHeader.id)}
-      >A4</DropdownItem
-    >
-    <DropdownItem on:click={() => printInvoice60mm(invoiceHeader.id)}
-      >60mm</DropdownItem
-    >
-  </Dropdown>
 </div>
 
 <!-- modals -->

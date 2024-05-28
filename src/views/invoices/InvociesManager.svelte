@@ -108,23 +108,7 @@
 
   function printInvoice(invoiceID, status) {
     if (status) {
-      window.open(
-        urls.backendRoute +
-          urls.printInvoiceEndpoint +
-          `?invoice_header_id=${invoiceID}&papel_size="A4"`,
-        "_blank"
-      );
-    }
-  }
-
-  function printInvoice60mm(invoiceID, status) {
-    if (status) {
-      window.open(
-        urls.backendRoute +
-          urls.printInvoice60mmEndpoint +
-          `?invoice_header_id=${invoiceID}&papel_size="60mm"`,
-        "_blank"
-      );
+      window.open(`/print/invoice?invoiceId=${invoiceID}`, "_blank");
     }
   }
 
@@ -248,10 +232,6 @@
               <DropdownItem
                 on:click={() => printInvoice(invoice.id, invoice.status)}
                 >Imprimir A4</DropdownItem
-              >
-              <DropdownItem
-                on:click={() => printInvoice60mm(invoice.id, invoice.status)}
-                >Imprimir 60mm</DropdownItem
               >
             </Dropdown>
           </div>

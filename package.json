@@ -20,6 +20,7 @@
     "vite": "^5.2.11"
   },
   "dependencies": {
+    "libphonenumber-js": "^1.11.1",
     "svelte-multiselect": "^10.2.0",
     "svelte-router-spa": "^7.0.1",
     "sweetalert2": "^11.7.27"

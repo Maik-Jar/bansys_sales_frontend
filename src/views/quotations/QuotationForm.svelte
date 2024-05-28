@@ -350,23 +350,7 @@
 
   function printQuotation(quotationID) {
     if (quotationHeader.status) {
-      window.open(
-        urls.backendRoute +
-          urls.printQuotationEndpoint +
-          `?quotation_header_id=${quotationID}&papel_size="A4"`,
-        "_blank"
-      );
-    }
-  }
-
-  function printQuotation60mm(quotationID) {
-    if (quotationHeader.status) {
-      window.open(
-        urls.backendRoute +
-          urls.printQuotation60mmEndpoint +
-          `?quotation_header_id=${quotationID}&papel_size="A60mm"`,
-        "_blank"
-      );
+      window.open(`/print/quotation?quotationId=${quotationID}`, "_blank");
     }
   }
 
@@ -573,21 +557,12 @@
       >Inactivar</Button
     >
   {/if}
-  <Button color="blue" type="button"
-    >Imprimir<ChevronDownOutline
-      class="w-6 h-6 ms-2 text-white dark:text-white"
-    /></Button
+  <Button
+    color="blue"
+    type="button"
+    disabled={!quotationHeader.status || !quotationHeader.id}
+    on:click={() => printQuotation(quotationHeader.id)}>Imprimir</Button
   >
-  <Dropdown>
-    <DropdownItem
-      disabled={!quotationHeader.status || !quotationHeader.id}
-      on:click={() => printQuotation(quotationHeader.id)}>A4</DropdownItem
-    >
-    <DropdownItem
-      disabled={!quotationHeader.status || !quotationHeader.id}
-      on:click={() => printQuotation60mm(quotationHeader.id)}>60mm</DropdownItem
-    >
-  </Dropdown>
 </div>
 
 <!-- modals -->

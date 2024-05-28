@@ -53,3 +53,10 @@ export const paymentMethods = writable([], (set) => {
     }
   );
 });
+
+export const company = writable({}, (set) => {
+  fetch(urls.backendRoute + urls.companyListEndpoint).then(async (res) => {
+    const company = await res.json();
+    set(company);
+  });
+});

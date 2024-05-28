@@ -108,23 +108,7 @@
 
   function printQuotationA4(quotationID, status) {
     if (status) {
-      window.open(
-        urls.backendRoute +
-          urls.printQuotationEndpoint +
-          `?quotation_header_id=${quotationID}&papel_size="A4"`,
-        "_blank"
-      );
-    }
-  }
-
-  function printQuotation60mm(quotationID, status) {
-    if (status) {
-      window.open(
-        urls.backendRoute +
-          urls.printQuotation60mmEndpoint +
-          `?quotation_header_id=${quotationID}&papel_size="60mm"`,
-        "_blank"
-      );
+      window.open(`/print/quotation?quotationId=${quotationID}`, "_blank");
     }
   }
 
@@ -243,11 +227,6 @@
                 on:click={() =>
                   printQuotationA4(quotation.id, quotation.status)}
                 >Imprimir A4</DropdownItem
-              >
-              <DropdownItem
-                on:click={() =>
-                  printQuotation60mm(quotation.id, quotation.status)}
-                >Imprimir 60mm</DropdownItem
               >
             </Dropdown>
           </div>

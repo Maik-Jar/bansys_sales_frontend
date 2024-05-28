@@ -28,6 +28,8 @@ import InputForm from "../../views/inventory/inputs/InputForm.svelte";
 import OutputManager from "../../views/inventory/outputs/OutputManager.svelte";
 import OutputForm from "../../views/inventory/outputs/OutputForm.svelte";
 import SalesReport from "../../views/reports/sales/SalesReport.svelte";
+import InvoicePrintA4 from "../../views/invoices/InvoicePrintA4.svelte";
+import QuotationPrintA4 from "../../views/quotations/QuotationPrintA4.svelte";
 import { getItem } from "../utils/functions";
 
 function isAuthenticated() {
@@ -213,6 +215,20 @@ const protectedRoutes = [
       {
         name: "output_form",
         component: OutputForm,
+      },
+    ],
+  },
+  {
+    name: "/print",
+    onlyIf: { guard: isAuthenticated, redirect: "/login" },
+    nestedRoutes: [
+      {
+        name: "invoice",
+        component: InvoicePrintA4,
+      },
+      {
+        name: "quotation",
+        component: QuotationPrintA4,
       },
     ],
   },
