@@ -105,7 +105,7 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_receipt")}
+  {#if hasPermission("master_data.add_receipt")}
     <Button
       size="sm"
       color="blue"

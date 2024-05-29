@@ -105,7 +105,7 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_paymentmethod")}
+  {#if hasPermission("master_data.add_paymentmethod")}
     <Button
       size="sm"
       color="blue"

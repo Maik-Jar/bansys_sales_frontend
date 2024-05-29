@@ -105,7 +105,7 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_documenttype")}
+  {#if hasPermission("master_data.add_documenttype")}
     <Button
       size="sm"
       color="blue"

@@ -1,5 +1,6 @@
 <script>
   import { Route, navigateTo } from "svelte-router-spa";
+  import { urls } from "../../lib/utils/urls";
   import { hasPermission } from "../../lib/utils/functions";
   import {
     DarkMode,
@@ -39,7 +40,7 @@
 
   function goAdminSite() {
     if (hasPermission("admin.view_logentry")) {
-      window.open("http://localhost:8000/admin");
+      window.open(`${urls.backendRoute}admin`);
     }
   }
 </script>

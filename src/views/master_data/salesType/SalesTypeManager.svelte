@@ -105,7 +105,7 @@
       >
     </Button>
   </form>
-  {#if hasPermission("point_of_sales.add_saletype")}
+  {#if hasPermission("master_data.add_saletype")}
     <Button
       size="sm"
       color="blue"
